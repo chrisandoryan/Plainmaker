@@ -146,10 +146,21 @@ class IEncryptorDecryptor():
         burp_request = self.modify_burp_request(plain_request, iRequestInfo, request_data)
         return burp_request
 
-    def handle_http_response(self):
+    def handle_http_response(self, plain_response, iResponseInfo, operation_mode):
         """
         Return an injected/modified HTTP response in raw HTTP format
         """
+
+        response_data = {}
+        if (operation_mode == IEncryptorDecryptor.MODE_RESPONSE_ENCRYPT):
+            response_data = self.encrypt_http_response()
+        elif (operation_mode == IEncryptorDecryptor.MODE_RESPONSE_DECRYPT):
+            response_data = self.decrypt_http_response()
+        else:
+            print("Unknown operation_mode (%s). Response will not be modified." % operation_mode)
+
+        burp_request = self.modify_burp_response(plain_response, iResponseInfo, response_data)
+        return burp_request
 
         pass
 
@@ -167,21 +178,38 @@ class IEncryptorDecryptor():
             else:
                 tampered_headers.append(header)
         
-        tampered_req = self.build_raw_http_request(tampered_headers, tampered_body)
-        print("Tampered Request", tampered_req)
+        custom_request = IEncryptorDecryptor.build_raw_http(tampered_headers, tampered_body)
+        print("Tampered Request", custom_request)
 
-        return tampered_req
+        return custom_request
     
-    def modify_burp_response(self, plain_request, iRequestInfo, response_data):
-        pass
+    def modify_burp_response(self, plain_response, iResponseInfo, response_data):
+        orig_headers_array = iResponseInfo.getHeaders()
 
-    def build_raw_http_request(self, headers, body):
+        if len(orig_headers_array) > 0 and response_data['statline']:
+            orig_headers_array[0] = response_data['statline']
+
+        tampered_body = response_data['body']
+        tampered_headers = orig_headers_array
+        for key, value in response_data['headers'].items():
+            h_change_index = FloydsHelpers.index_containing_substring(tampered_headers, key)
+            header = "%s: %s" % (key, value, )
+
+            if (h_change_index):
+                tampered_headers[h_change_index] = header
+            else:
+                tampered_headers.append(header)
+        
+        custom_response = IEncryptorDecryptor.build_raw_http(tampered_headers, tampered_body)
+        print("Tampered Response", custom_response)
+
+        return custom_response
+
+    @staticmethod
+    def build_raw_http(headers, body):
         req = '\r\n'.join(headers)
         req += 2 * '\r\n' + body
         return req
-
-    def build_raw_http_response(self, headers, body):
-        pass
     
     @staticmethod
     def get_request_method(iRequestInfo):
@@ -260,10 +288,10 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
             iRequestInfo = self._helpers.analyzeRequest(messageInfo)
 
             # 1. Request Decryption Stage
-            # If the message is a HTTP request and the handler is processProxyMessage(),
+            # If the message is a HTTP request and the handler is iProxyListener,
             # Then Plainmaker will decrypt the HTTP request so the user can view/edit them in their plaintext form before forwarding it to the destination server.
             if handler == self.PROXY_HANDLER:
-                print("Request Decryption Stage")
+                print("1. Request Decryption Stage")
 
                 new_req = encdec.handle_http_request(
                     plain_request, 
@@ -274,10 +302,10 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
                 messageInfo.setRequest(new_req_bytes)
             
             # 2. Request Re-encryption Stage
-            # If the message is HTTP request and the handler is processHttpMessage,
+            # If the message is HTTP request and the handler is iHttpListener,
             # Then Plainmaker will encrypt (or re-encrypt) the HTTP request so that the destination server still receives a valid (encrypted) HTTP request payload.
             else:
-                print("Request Re-encryption Stage")
+                print("2. Request Re-encryption Stage")
                 
                 new_req = encdec.handle_http_request(
                     plain_request, 
@@ -291,20 +319,32 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
             iResponseInfo = self._helpers.analyzeResponse(messageInfo.getResponse())
 
             # 3. Response Decryption Stage
-            # If the message is HTTP response and the handler is processHttpMessage, 
+            # If the message is HTTP response and the handler is iHttpListener, 
             # Then Plainmaker will decrypt the HTTP response so user can view/edit them in their plaintext form before forwarding it to the client.
             if handler == self.HTTP_HANDLER:
-                print("Response Decryption Stage")
+                print("3. Response Decryption Stage")
 
-                pass
+                new_res = encdec.handle_http_response(
+                    plain_response, 
+                    iResponseInfo, 
+                    operation_mode=IEncryptorDecryptor.MODE_RESPONSE_DECRYPT
+                )
+                new_res_bytes = FloydsHelpers.ps2jb(new_res)
+                messageInfo.setResponse(new_res_bytes)
                 
             # 4. Response Re-encryption Stage
-            # If the message is HTTP response and the handler is processProxyMessage,
+            # If the message is HTTP response and the handler is iProxyListener,
             # Then Plainmaker will encrypt the HTTP response so that the client still receives a valid (encrypted) HTTP response payload.
             else:
-                print("Response Re-encryption Stage")
+                print("4. Response Re-encryption Stage")
 
-                pass
+                new_res = encdec.handle_http_response(
+                    plain_response, 
+                    iResponseInfo, 
+                    operation_mode=IEncryptorDecryptor.MODE_RESPONSE_ENCRYPT
+                )
+                new_res_bytes = FloydsHelpers.ps2jb(new_res)
+                messageInfo.setResponse(new_res_bytes)
 
         pass
 
