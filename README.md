@@ -19,10 +19,10 @@ So, if sometimes in the future you find yourself suffering like Jojo, this repos
 
 ## Features
 
- - A fully-customizable and implementable Interface class, named `IEncryptorDecryptor`, for creating your own Burpsuite Plugin/Extension.
- - This interface allows you to implement your custom encryption/decryption algorithms and integrate them directly into Burpsuite requests and responses.
- - You have total control on **how the encryption/decryption flow works**, and **which algorithms to be used**. AES? RSA? DES? Lattice-based Cryptography? You name it.
- - Based on Python/Jython 2.7.3.
+- Provides a fully-customizable and implementable Interface class, named `IEncryptorDecryptor` for creating your own Burpsuite Plugin/Extension.
+- `IEncryptorDecryptor` interface allows you to implement your custom encryption/decryption script and integrate them directly into Burpsuite requests and responses.
+- Total control over the encryption/decryption flow and choice of algorithms (e.g. AES, RSA, DES, etc.).
+- Written in Python/Jython 2.7.3 and easily integrated into your Burpsuite workflow.
 
 ## What It Does
 In hindsight, this is similar to what AESKiller is doing:
@@ -46,6 +46,7 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adj
 
 Every interface methods above should returns a `Dictionary` object containing `headers` and `body` keys, denoting HTTP headers and HTTP body that you want to inject into Burpsuite's requests/responses.
 
+### Some Examples
 For example, XX.
 
 ## Installation
