@@ -12,7 +12,7 @@ import json
 import base64
 import hashlib
 from urlparse import urlparse
-from urllib import unquote, quote
+from urllib import unquote, quote_plus
 from base64 import b64encode, b64decode
 
 # Jython imports
@@ -275,12 +275,26 @@ class BrimoEncryptorDecryptor(IEncryptorDecryptor):
         encrypted = b64encode(encrypted)
         integrity_check = hashlib.md5(encrypted).hexdigest().encode()
 
-        full_request = quote((integrity_check + encrypted).decode())
+        full_request = quote_plus((integrity_check + encrypted).decode())
         print("Encrypted Request", encrypted)
         print("Full Request", full_request)
 
+        nonce = full_request[16:32]
+        aesKey = SecretKeySpec(self.KEY, "AES")
+        gcmSpec = GCMParameterSpec(self.GCM_TAG_LENGTH * 8, nonce)
+        cipher = Cipher.getInstance("AES/GCM/NOPADDING")
+        cipher.init(Cipher.ENCRYPT_MODE, aesKey, gcmSpec)
+
+        new_nonce = cipher.doFinal(str(self.saved_increment).encode())
+        new_nonce = new_nonce.tostring()
+        new_nonce = b64encode(new_nonce).decode()
+
+        x_random_key = new_nonce
+
         return {
-            "headers": {},
+            "headers": {
+                "X-Random-Key": x_random_key
+            },
             "body": "request=%s" % full_request
         }
 
@@ -328,7 +342,9 @@ class BrimoEncryptorDecryptor(IEncryptorDecryptor):
 
         # Save the nonce for request re-encryption in the later stage.
         self.saved_nonce = nonce
+        print("Saved Nonce", self.saved_nonce)
         self.saved_increment = increment
+        print("Saved Increment", self.saved_increment)
 
         return {
             "headers": {},
@@ -337,11 +353,14 @@ class BrimoEncryptorDecryptor(IEncryptorDecryptor):
 
     def decrypt_http_response(self, plain_response, iResponseInfo):
         res_body = IEncryptorDecryptor.get_http_body(plain_response, iResponseInfo)
-        res_body = res_body.replace('"', '')
-        print("Response Body", res_body)
+        res_body_cleaned = res_body.replace('"', '')
+        print("Response Body", res_body_cleaned)
 
-        nonce = res_body[:8] + ('0' * (16 - 8 - len(self.saved_increment))) + self.saved_increment
-        ct = b64decode(unquote(res_body[32:]))
+        nonce = res_body_cleaned[:8] + ('0' * (16 - 8 - len(self.saved_increment))) + self.saved_increment
+        print("Decryption Nonce", nonce)
+
+        ct = b64decode(unquote(res_body_cleaned[32:]))
+        print("CT", ct)
        
         aesKey = SecretKeySpec(self.KEY, "AES")
         gcmSpec = GCMParameterSpec(self.GCM_TAG_LENGTH * 8, nonce)
@@ -353,8 +372,9 @@ class BrimoEncryptorDecryptor(IEncryptorDecryptor):
         print("Plain Response", plain)
 
         return {
+            "statline": "",
             "headers": {},
-            "body": ""
+            "body": res_body
         }
 
 class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorTabFactory):
@@ -414,6 +434,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
 
     def filter_message(self, handler, messageIsRequest, messageInfo):
         iRequestInfo = self._helpers.analyzeRequest(messageInfo)
+        print("MessageInfo", messageInfo)
         if not iRequestInfo.getUrl():
             print("iRequestInfo.getUrl() returned None, so bailing out of analyzing this request")
             return
@@ -424,6 +445,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
         if messageIsRequest:
             plain_request = FloydsHelpers.jb2ps(messageInfo.getRequest())
             iRequestInfo = self._helpers.analyzeRequest(messageInfo)
+            print("Original Request", plain_request)
 
             # 1. Request Decryption Stage
             # If the message is a HTTP request and the handler is iProxyListener,
@@ -455,6 +477,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
         else:
             plain_response = FloydsHelpers.jb2ps(messageInfo.getResponse())
             iResponseInfo = self._helpers.analyzeResponse(messageInfo.getResponse())
+            print("Original Response", plain_response)
 
             # 3. Response Decryption Stage
             # If the message is HTTP response and the handler is iHttpListener, 
