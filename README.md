@@ -7,7 +7,7 @@ After some hours working to *reverse engineer* the encryption/decryption process
 
 However, since <ins>it is a script</ins>, then Jojo must copy the values outputted by the script, paste it into Burpsuite, then send it away.
 
-![jojos-illustration](https://github.com/chrisandoryan/Plainmaker/blob/main/graphics/JojosTrouble.gif)
+![Jojo's Illustration](graphics/JojosTrouble.gif)
 
 Using <a href="https://github.com/Ebryx/AES-Killer" target="_blank">AESKiller</a> is also not an option because, for example: 
 - The *mobile application* uses a customized AES encryption flow, with different key and IV for encrypting and decrypting HTTP requests and responses.
