@@ -1,13 +1,19 @@
 # Plainmaker: Burpsuite Plugin
 
-<h4 align="center">A Simply-implementable and Customizable AESKiller-like Burpsuite Extension<a href="https://github.com/chrisandoryan/Nethive-Project" target="_blank"></a></h4>
+<h4 align="center">A Programmable and Implementable AESKiller-like Burpsuite Extension<a href="https://github.com/chrisandoryan/Nethive-Project" target="_blank"></a></h4>
 
 ## Background
-After some hours working to *reverse engineer* the encryption/decryption process of a mobile application, Jojo successfully comes up with a `crypt.py` script that allows him to generate a customized and encrypted HTTP request/response.
+After some hours working to *reverse engineer* the encryption/decryption process of a mobile application, Jojo successfully comes up with a `crypt.py` script that allows him to generate a customized and encrypted HTTP requests and responses.
 
-However, since <ins>it is a script</ins>, then XX.
+However, since <ins>it is a script</ins>, then Jojo must copy the values outputted by the script, paste it into Burpsuite, then send it away.
 
-Using AESKiller is also not an option because, XX.
+[TBA GIF Example]
+
+Using <a href="https://github.com/Ebryx/AES-Killer" target="_blank">AESKiller</a> is also not an option because, for example: 
+- The *mobile application* uses a customized AES encryption flow, with different key and IV for encrypting and decrypting HTTP requests and responses.
+- Some operations (e.g., XOR) must be done to the key or IV  before it can be used in the encryption/decryption process.
+- The key or IV is dynamically generated, or must be retrieved from somewhere in the HTTP request/response.
+- Or perhaps, the *mobile application* simply does not use AES for its encryption/decryption process.
 
 So, if sometimes in the future you find yourself suffering like Jojo, this repository might be for you.
 
@@ -24,8 +30,12 @@ In hindsight, this is similar to what AESKiller is doing:
 - Burp sees the decrypted traffic, including Repeater, Intruder and Scanner, but the client/mobile app and server see the encrypted version.
 
 However:
-- There will be no input boxes to insert an AES key and IV; you have to <ins>implement the encryption/decryption algorithm by yourself</ins>.
-- But it's just that, *literally*. Simply take your `crypt.py`, make it into a Python class that implements `IEncryptDecrypt` interface, and *voila*. **The encrypted/decrypted values will be injected into Burpsuite's requests/responses automatically.**
+- There will be no static input boxes to insert an AES key and IV; you are free to <ins>implement the flow of the encryption/decryption by yourself</ins>.
+- XX
+
+So that's that, *literally*. Simply take your `crypt.py` (if you already have one), make it into a Python class that implements `IEncryptDecrypt` interface, and *voila*. 
+
+**The encrypted/decrypted values will be injected into Burpsuite's requests/responses automatically.**
 
 ## How It Works
  
