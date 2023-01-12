@@ -12,7 +12,7 @@ import json
 import base64
 import hashlib
 from urlparse import urlparse
-from urllib import unquote
+from urllib import unquote, quote
 from base64 import b64encode, b64decode
 
 # Jython imports
@@ -207,8 +207,11 @@ class IEncryptorDecryptor():
 
     @staticmethod
     def build_raw_http(headers, body):
-        req = '\r\n'.join(headers)
-        req += 2 * '\r\n' + body
+        newline = "\r\n"
+        headers = FloydsHelpers.fix_content_length(headers, len(body), newline)
+        req = headers        
+        req += 2 * newline + body
+        print("Request Builder", req)
         return req
     
     @staticmethod
@@ -226,9 +229,122 @@ class IEncryptorDecryptor():
         req_body = plain[iRequestInfo.getBodyOffset():]
         return req_body
 
+class BrimoEncryptorDecryptor(IEncryptorDecryptor):
+    def __init__(self, secret_phrase, device_id, aes_key):
+        self.increment = 0
+        self.DEVICE_ID_KEY = b64decode(device_id.encode())
+        self.STRING_PHRASE = hashlib.md5(secret_phrase.encode()).digest()
+        self.KEY = aes_key.encode('utf-8')
+        self.GCM_TAG_LENGTH = 16;
+    
+    def encrypt_http_request(self, uri, body, x_random_key, method="POST"):
+        bodyparts = body.split('request=')
+        body = bodyparts[1].strip()
+
+        print("Body", body)
+        print("X-Random-Key", x_random_key)
+
+        aesKey = SecretKeySpec(self.KEY, "AES")
+        gcmSpec = GCMParameterSpec(self.GCM_TAG_LENGTH * 8, self.saved_nonce)
+        cipher = Cipher.getInstance("AES/GCM/NOPADDING")
+        cipher.init(Cipher.ENCRYPT_MODE, aesKey, gcmSpec)
+
+        encrypted = cipher.doFinal(body.decode())
+        encrypted = encrypted.tostring()
+        encrypted = b64encode(encrypted)
+        integrity_check = hashlib.md5(encrypted).hexdigest().encode()
+
+        full_request = quote((integrity_check + encrypted).decode())
+        print("Encrypted Request", encrypted)
+        print("Full Request", full_request)
+
+        # encryptObject = AES.new(key, AES.MODE_GCM, nonce.encode())
+        # enc, tag = encryptObject.encrypt_and_digest(plain)
+        # encryptedRequest = b64encode(enc+tag)
+        # integrityCheck = hashlib.md5(encryptedRequest).hexdigest().encode()
+        # fullRequest = urllib.parse.quote_plus((integrityCheck+encryptedRequest).decode())
+
+        return {
+            "headers": {},
+            "body": "request=%s" % full_request
+        }
+
+    def decrypt_http_request(self, uri, body, x_random_key, method="POST"):
+        bodyparts = body.split('request=')
+        body = bodyparts[1].strip()
+
+        print("Body", body)
+        print("X-Random-Key", x_random_key)
+
+        nonce = body[16:32]
+        ct = b64decode(unquote(x_random_key))
+
+        aesKey = SecretKeySpec(self.KEY, "AES")
+        aesIV = IvParameterSpec(nonce.encode())
+        cipher = Cipher.getInstance("AES/GCM/NOPADDING")
+        cipher.init(Cipher.DECRYPT_MODE, aesKey, aesIV)
+        
+        increment = cipher.doFinal(ct)
+        increment = increment.tostring()
+
+        nonce = "0" * (16 - 4 - len(increment))
+        nonce += increment + "FFFF"
+        print("Nonce", nonce)
+
+        ct = b64decode(unquote(body[32:]))
+        print("CT", ct, len(ct))
+
+        aesKey = SecretKeySpec(self.KEY, "AES")
+        gcmSpec = GCMParameterSpec(self.GCM_TAG_LENGTH * 8, nonce)
+        cipher = Cipher.getInstance("AES/GCM/NOPADDING")
+        cipher.init(Cipher.DECRYPT_MODE, aesKey, gcmSpec)
+
+        plain = cipher.doFinal(ct)
+        plain = plain.tostring()
+        print("Plain Request", plain)
+
+        # Save the nonce for request re-encryption in the later stage.
+        self.saved_nonce = nonce
+
+        return {
+            "headers": {},
+            "body": "request=%s" % plain
+        }
+
+    def handle_http_request(self, plain_request, iRequestInfo, operation_mode):
+        """
+        Return an tampered/injected/modified HTTP request in raw HTTP format
+        """
+
+        req_uri = IEncryptorDecryptor.get_request_uri(iRequestInfo)
+        req_method = IEncryptorDecryptor.get_request_method(iRequestInfo)
+        req_body = IEncryptorDecryptor.get_request_body(plain_request, iRequestInfo)
+
+        orig_headers_array = iRequestInfo.getHeaders()
+        x_random_key = [x for x in orig_headers_array if 'x-random-key' in x.lower()][0]
+        x_random_key = x_random_key.split(":")[1].strip()
+        
+        request_data = {}
+        if (operation_mode == IEncryptorDecryptor.MODE_REQUEST_ENCRYPT):
+            request_data = self.encrypt_http_request(req_uri, req_body, x_random_key, req_method)
+        elif (operation_mode == IEncryptorDecryptor.MODE_REQUEST_DECRYPT):
+            request_data = self.decrypt_http_request(req_uri, req_body, x_random_key, req_method)
+        else:
+            print("Unknown operation_mode (%s). Request will not be modified." % operation_mode)
+
+        burp_request = self.modify_burp_request(plain_request, iRequestInfo, request_data)
+        return burp_request
+
 class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorTabFactory):
     HTTP_HANDLER = 0
     PROXY_HANDLER = 1
+
+    def __init__(self):
+        self.encdec = BrimoEncryptorDecryptor(
+            secret_phrase="fahrdrgr",
+            device_id="KOJ3zSW5PCI3jerRaqUISGQ/rf19l3Zm8/5Nxageu5jELHgUsDtiBoAR0FVSRnSt",
+            aes_key="c9260f0438183ef64fc6b6231ebf2115"
+        )
 
     def registerExtenderCallbacks(self, callbacks):
 
@@ -281,8 +397,6 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
             print(iRequestInfo.getUrl(), " is not in scope")
             return
         
-        encdec = IEncryptorDecryptor()
-
         if messageIsRequest:
             plain_request = FloydsHelpers.jb2ps(messageInfo.getRequest())
             iRequestInfo = self._helpers.analyzeRequest(messageInfo)
@@ -293,7 +407,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
             if handler == self.PROXY_HANDLER:
                 print("1. Request Decryption Stage")
 
-                new_req = encdec.handle_http_request(
+                new_req = self.encdec.handle_http_request(
                     plain_request, 
                     iRequestInfo, 
                     operation_mode=IEncryptorDecryptor.MODE_REQUEST_DECRYPT
@@ -307,7 +421,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
             else:
                 print("2. Request Re-encryption Stage")
                 
-                new_req = encdec.handle_http_request(
+                new_req = self.encdec.handle_http_request(
                     plain_request, 
                     iRequestInfo, 
                     operation_mode=IEncryptorDecryptor.MODE_REQUEST_ENCRYPT
@@ -315,6 +429,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
                 new_req_bytes = FloydsHelpers.ps2jb(new_req)
                 messageInfo.setRequest(new_req_bytes)
         else:
+            return
             plain_response = FloydsHelpers.jb2ps(messageInfo.getResponse())
             iResponseInfo = self._helpers.analyzeResponse(messageInfo.getResponse())
 
@@ -324,7 +439,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
             if handler == self.HTTP_HANDLER:
                 print("3. Response Decryption Stage")
 
-                new_res = encdec.handle_http_response(
+                new_res = self.encdec.handle_http_response(
                     plain_response, 
                     iResponseInfo, 
                     operation_mode=IEncryptorDecryptor.MODE_RESPONSE_DECRYPT
@@ -338,7 +453,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
             else:
                 print("4. Response Re-encryption Stage")
 
-                new_res = encdec.handle_http_response(
+                new_res = self.encdec.handle_http_response(
                     plain_response, 
                     iResponseInfo, 
                     operation_mode=IEncryptorDecryptor.MODE_RESPONSE_ENCRYPT
@@ -445,12 +560,11 @@ class FloydsHelpers(object):
     
     @staticmethod
     def fix_content_length(headers, length, newline):
-        h = list(headers.split(newline))
-        for index, x in enumerate(h):
+        for index, x in enumerate(headers):
             if "content-length:" == x[:len("content-length:")].lower():
-                h[index] = x[:len("content-length:")] + " " + str(length)
-                return newline.join(h)
+                headers[index] = x[:len("content-length:")] + " " + str(length)
+                return newline.join(headers)
         else:
             print("WARNING: Couldn't find Content-Length header in request, simply adding this header")
-            h.insert(1, "Content-Length: " + str(length))
-            return newline.join(h)
+            headers.insert(1, "Content-Length: " + str(length))
+            return newline.join(headers)
