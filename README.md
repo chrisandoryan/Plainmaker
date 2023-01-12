@@ -43,4 +43,9 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adj
 | Request Re-encryption  	| `encrypt_http_request(plain_request, iRequestInfo)`    	| When the decrypted HTTP request has been modified and you want to re-encrypt it so that it stays valid upon received by the server..      	|
 | Response Decryption    	| `decrypt_http_response(plain_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
 | Response Re-encryption 	| `encrypt_http_response(plain_response, iResponseInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
+
+Every interface methods above should returns a `Dictionary` object containing `headers` and `body` keys, denoting HTTP headers and HTTP body that you want to inject into Burpsuite's requests/responses.
+
+For example, XX.
+
 ## Installation

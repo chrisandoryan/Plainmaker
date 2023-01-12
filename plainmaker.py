@@ -106,7 +106,6 @@ class IEncryptorDecryptor():
         """
 
         return {
-            "statline": "HTTP/1.1 200 OK",
             "headers": {
                 "date": "INJECTED_BY_PLAINMAKER_RESPONSE_ENCRYPTION",
                 "cache-control": "INJECTED_BY_PLAINMAKER_RESPONSE_ENCRYPTION",
@@ -134,7 +133,6 @@ class IEncryptorDecryptor():
         """
 
         return {
-            "statline": "HTTP/1.1 200 OK",
             "headers": {
                 "date": "INJECTED_BY_PLAINMAKER_RESPONSE_DECRYPTION",
                 "cache-control": "INJECTED_BY_PLAINMAKER_RESPONSE_DECRYPTION",
@@ -199,9 +197,6 @@ class IEncryptorDecryptor():
     
     def modify_burp_response(self, plain_response, iResponseInfo, response_data):
         orig_headers_array = iResponseInfo.getHeaders()
-
-        if len(orig_headers_array) > 0 and response_data['statline']:
-            orig_headers_array[0] = response_data['statline']
 
         tampered_body = response_data['body']
         tampered_headers = orig_headers_array
