@@ -29,13 +29,10 @@ In hindsight, this is similar to what AESKiller is doing:
 - The IProxyListener decrypt requests and encrypt responses, and an IHttpListener than encrypt requests and decrypt responses.
 - Burp sees the decrypted traffic, including Repeater, Intruder and Scanner, but the client/mobile app and server see the encrypted version.
 
-However:
-- There will be no static input boxes to insert an AES key and IV; you are free to <ins>implement the flow of the encryption/decryption by yourself</ins>.
-- XX
+However, there will be no static input boxes to insert an AES key and IV; you have the freedom to <ins>implement the flow of the encryption/decryption by yourself</ins>.
 
-So that's that, *literally*. Simply take your `crypt.py` (if you already have one), make it into a Python class that implements `IEncryptDecrypt` interface, and *voila*. 
-
-**The encrypted/decrypted values will be injected into Burpsuite's requests/responses automatically.**
+### Huh? Then?
+Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adjust it into a Python class that implements `IEncryptDecrypt` interface, and *voila*. **The encrypted/decrypted values will be injected into Burpsuite's requests/responses automatically.**
 
 ## How It Works
  
