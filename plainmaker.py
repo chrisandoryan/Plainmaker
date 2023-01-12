@@ -31,7 +31,7 @@ class IEncryptorDecryptor():
 
     def encrypt_http_request(self, plain_request, iRequestInfo):
         """
-        Perform a custom encryption algorithm and inject the encrypted values into HTTP request's headers and body as the result.
+        Implement this method and perform a custom encryption algorithm and inject the encrypted values into HTTP request's headers and body as the result.
 
         Parameters
         ----------
@@ -62,7 +62,7 @@ class IEncryptorDecryptor():
 
     def decrypt_http_request(self, plain_request, iRequestInfo):
         """
-        Perform a custom decryption algorithm and inject the decrypted values into HTTP request's headers and body as the result.
+        Implement this method and perform a custom decryption algorithm and inject the decrypted values into HTTP request's headers and body as the result.
 
         Parameters
         ----------
@@ -90,7 +90,7 @@ class IEncryptorDecryptor():
 
     def encrypt_http_response(self, plain_response, iResponseInfo):
         """
-        Perform a custom encryption algorithm and inject the encrypted values into HTTP response's statline, headers and body as the result.
+        Implement this method and perform a custom encryption algorithm and inject the encrypted values into HTTP response's statline, headers and body as the result.
 
         Parameters
         ----------
@@ -118,7 +118,7 @@ class IEncryptorDecryptor():
 
     def decrypt_http_response(self, plain_response, iResponseInfo):
         """
-        Perform a custom decryption algorithm and inject the decrypted values into HTTP response's statline, headers and body as the result.
+        Implement this method and perform a custom decryption algorithm and inject the decrypted values into HTTP response's statline, headers and body as the result.
 
         Parameters
         ----------
@@ -242,152 +242,13 @@ class IEncryptorDecryptor():
         req_body = plain[iReqResInfo.getBodyOffset():]
         return req_body
 
-class BrimoEncryptorDecryptor(IEncryptorDecryptor):
-    def __init__(self, secret_phrase, device_id, aes_key):
-        self.increment = 0
-        self.DEVICE_ID_KEY = b64decode(device_id.encode())
-        self.STRING_PHRASE = hashlib.md5(secret_phrase.encode()).digest()
-        self.KEY = aes_key.encode('utf-8')
-        self.GCM_TAG_LENGTH = 16;
-    
-    def encrypt_http_request(self, plain_request, iRequestInfo):
-        orig_headers_array = iRequestInfo.getHeaders()
-        x_random_key = [x for x in orig_headers_array if 'x-random-key' in x.lower()][0]
-        x_random_key = x_random_key.split(":")[1].strip()
-
-        req_uri = IEncryptorDecryptor.get_request_uri(iRequestInfo)
-        req_method = IEncryptorDecryptor.get_request_method(iRequestInfo)
-        req_body = IEncryptorDecryptor.get_http_body(plain_request, iRequestInfo)
-
-        bodyparts = req_body.split('request=')
-        body = bodyparts[1].strip()
-
-        print("Body", body)
-        print("X-Random-Key", x_random_key)
-
-        aesKey = SecretKeySpec(self.KEY, "AES")
-        gcmSpec = GCMParameterSpec(self.GCM_TAG_LENGTH * 8, self.saved_nonce)
-        cipher = Cipher.getInstance("AES/GCM/NOPADDING")
-        cipher.init(Cipher.ENCRYPT_MODE, aesKey, gcmSpec)
-
-        encrypted = cipher.doFinal(body.decode())
-        encrypted = encrypted.tostring()
-        encrypted = b64encode(encrypted)
-        integrity_check = hashlib.md5(encrypted).hexdigest().encode()
-
-        full_request = quote_plus((integrity_check + encrypted).decode())
-        print("Encrypted Request", encrypted)
-        print("Full Request", full_request)
-
-        nonce = full_request[16:32]
-        aesKey = SecretKeySpec(self.KEY, "AES")
-        gcmSpec = GCMParameterSpec(self.GCM_TAG_LENGTH * 8, nonce)
-        cipher = Cipher.getInstance("AES/GCM/NOPADDING")
-        cipher.init(Cipher.ENCRYPT_MODE, aesKey, gcmSpec)
-
-        new_nonce = cipher.doFinal(str(self.saved_increment).encode())
-        new_nonce = new_nonce.tostring()
-        new_nonce = b64encode(new_nonce).decode()
-
-        x_random_key = new_nonce
-
-        return {
-            "headers": {
-                "X-Random-Key": x_random_key
-            },
-            "body": "request=%s" % full_request
-        }
-
-    def decrypt_http_request(self, plain_request, iRequestInfo):
-        orig_headers_array = iRequestInfo.getHeaders()
-        x_random_key = [x for x in orig_headers_array if 'x-random-key' in x.lower()][0]
-        x_random_key = x_random_key.split(":")[1].strip()
-
-        req_uri = IEncryptorDecryptor.get_request_uri(iRequestInfo)
-        req_method = IEncryptorDecryptor.get_request_method(iRequestInfo)
-        req_body = IEncryptorDecryptor.get_http_body(plain_request, iRequestInfo)
-
-        bodyparts = req_body.split('request=')
-        body = bodyparts[1].strip()
-
-        print("Body", body)
-        print("X-Random-Key", x_random_key)
-
-        nonce = body[16:32]
-        ct = b64decode(unquote(x_random_key))
-
-        aesKey = SecretKeySpec(self.KEY, "AES")
-        aesIV = IvParameterSpec(nonce.encode())
-        cipher = Cipher.getInstance("AES/GCM/NOPADDING")
-        cipher.init(Cipher.DECRYPT_MODE, aesKey, aesIV)
-        
-        increment = cipher.doFinal(ct)
-        increment = increment.tostring()
-
-        nonce = "0" * (16 - 4 - len(increment))
-        nonce += increment + "FFFF"
-        print("Nonce", nonce)
-
-        ct = b64decode(unquote(body[32:]))
-        print("CT", ct, len(ct))
-
-        aesKey = SecretKeySpec(self.KEY, "AES")
-        gcmSpec = GCMParameterSpec(self.GCM_TAG_LENGTH * 8, nonce)
-        cipher = Cipher.getInstance("AES/GCM/NOPADDING")
-        cipher.init(Cipher.DECRYPT_MODE, aesKey, gcmSpec)
-
-        plain = cipher.doFinal(ct)
-        plain = plain.tostring()
-        print("Plain Request", plain)
-
-        # Save the nonce for request re-encryption in the later stage.
-        self.saved_nonce = nonce
-        print("Saved Nonce", self.saved_nonce)
-        self.saved_increment = increment
-        print("Saved Increment", self.saved_increment)
-
-        return {
-            "headers": {},
-            "body": "request=%s" % plain
-        }
-
-    def decrypt_http_response(self, plain_response, iResponseInfo):
-        res_body = IEncryptorDecryptor.get_http_body(plain_response, iResponseInfo)
-        res_body_cleaned = res_body.replace('"', '')
-        print("Response Body", res_body_cleaned)
-
-        nonce = res_body_cleaned[:8] + ('0' * (16 - 8 - len(self.saved_increment))) + self.saved_increment
-        print("Decryption Nonce", nonce)
-
-        ct = b64decode(unquote(res_body_cleaned[32:]))
-        print("CT", ct)
-       
-        aesKey = SecretKeySpec(self.KEY, "AES")
-        gcmSpec = GCMParameterSpec(self.GCM_TAG_LENGTH * 8, nonce)
-        cipher = Cipher.getInstance("AES/GCM/NOPADDING")
-        cipher.init(Cipher.DECRYPT_MODE, aesKey, gcmSpec)
-
-        plain = cipher.doFinal(ct)
-        plain = plain.tostring()
-        print("Plain Response", plain)
-
-        return {
-            "statline": "",
-            "headers": {},
-            "body": res_body
-        }
-
 class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorTabFactory):
     HTTP_HANDLER = 0
     PROXY_HANDLER = 1
 
     def __init__(self):
         # Create a new instance of your EncryptorDecryptor class here.
-        encdec = BrimoEncryptorDecryptor(
-            secret_phrase="fahrdrgr",
-            device_id="KOJ3zSW5PCI3jerRaqUISGQ/rf19l3Zm8/5Nxageu5jELHgUsDtiBoAR0FVSRnSt",
-            aes_key="c9260f0438183ef64fc6b6231ebf2115"
-        )
+        encdec = IEncryptorDecryptor()
         self.encdec = encdec
 
     def registerExtenderCallbacks(self, callbacks):
@@ -500,7 +361,6 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
             # Then Plainmaker will encrypt the HTTP response so that the client still receives a valid (encrypted) HTTP response payload.
             else:
                 print("4. Response Re-encryption Stage")
-                return
                 new_res = self.encdec.handle_http_response(
                     plain_response, 
                     iResponseInfo, 
