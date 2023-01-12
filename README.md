@@ -35,12 +35,12 @@ However, there will be no static input boxes to insert an AES key and IV; you ha
 Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adjust it into a Python class that implements `IEncryptDecrypt` interface, and *voila*. **The encrypted/decrypted values will be injected into Burpsuite's requests/responses automatically.**
 
 ## How It Works
-**Plainmaker** has 4-stage encryption/decryption interfaces that can be implemented and overridden.
+**Plainmaker** has 4-stage encryption/decryption interfaces that can be implemented and overridden in your own Python script.
 
 | **Stage**              	| Interface Method                                       	| When to Implement?                                                                                                                        	|
 |------------------------	|--------------------------------------------------------	|-------------------------------------------------------------------------------------------------------------------------------------------	|
-| Request Decryption     	| `decrypt_http_request(plain_request, iRequestInfo)`    	| When the HTTP request is encrypted and you want to decrypt it.                                                                            	|
+| Request Decryption     	| `decrypt_http_request(plain_request, iRequestInfo)`    	| When the HTTP request is encrypted and you want Burpsuite to display it in the decrypted format.                                                                            	|
 | Request Re-encryption  	| `encrypt_http_request(plain_request, iRequestInfo)`    	| When the decrypted HTTP request has been modified and you want to re-encrypt it so that it stays valid upon received by the server..      	|
-| Response Decryption    	| `decrypt_http_response(plain_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want to decrypt it.                                                                           	|
+| Response Decryption    	| `decrypt_http_response(plain_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
 | Response Re-encryption 	| `encrypt_http_response(plain_response, iResponseInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
 ## Installation
