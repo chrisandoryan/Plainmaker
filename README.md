@@ -73,7 +73,9 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         }
 ```
 
-Each of the methods you override should returns a `dictionary` value containing **headers** and **body** attributes, denoting the HTTP headers and HTTP body that you want to inject into Burpsuite's requests/responses. 
+Each of the methods you override should return a dictionary containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
+
+Hence, when Burpsuite intercepts an HTTP request or response, it will insert the headers and body from your dictionary into the original request or response.
 
 ![Plainmaker Burp Preview 1](graphics/Plainmaker-Burp-Preview1.png)
 
