@@ -42,10 +42,10 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adj
 
 | **Stage**              	| Interface Method                                       	| When to Implement?                                                                                                                        	|
 |------------------------	|--------------------------------------------------------	|-------------------------------------------------------------------------------------------------------------------------------------------	|
-| Request Decryption     	| `decrypt_http_request(plain_request, iRequestInfo)`    	| When the HTTP request is encrypted and you want Burpsuite to display it in the decrypted format.                                                                            	|
-| Request Re-encryption  	| `encrypt_http_request(plain_request, iRequestInfo)`    	| When the decrypted HTTP request has been modified and you want to re-encrypt it so that it stays valid upon received by the server..      	|
-| Response Decryption    	| `decrypt_http_response(plain_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
-| Response Re-encryption 	| `encrypt_http_response(plain_response, iResponseInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
+| Request Decryption     	| `decrypt_http_request(original_request, iRequestInfo)`    	| When the HTTP request is encrypted and you want Burpsuite to display it in the decrypted format.                                                                            	|
+| Request Re-encryption  	| `encrypt_http_request(original_request, iRequestInfo)`    	| When the decrypted HTTP request has been modified and you want to re-encrypt it so that it stays valid upon received by the server..      	|
+| Response Decryption    	| `decrypt_http_response(original_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
+| Response Re-encryption 	| `encrypt_http_response(original_response, iResponseInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
 
 ### I get it. But what should I write in my Python script?
 
@@ -54,12 +54,12 @@ When creating a Python class that implements `IEncryptorDecryptor` interface, in
 ```python
 class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
     @overrides(IEncryptorDecryptor)
-    def decrypt_http_request(self, plain_request, iRequestInfo):
-        req_body = IEncryptorDecryptor.get_http_body(plain_request, iRequestInfo)
+    def decrypt_http_request(self, original_request, iRequestInfo):
+        req_body = IEncryptorDecryptor.get_http_body(original_request, iRequestInfo)
         key = "some_secure_r4ndom_keys_1337"
         IV = "some_secure_r4ndom_IV_1337"
 
-        decrypted_body = myAlgorithmToDecrypt(req_body, key, IV)
+        decrypted_body = my_decryption_algorithm(req_body, key, IV)
 
         return {
             "headers": {
