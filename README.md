@@ -47,11 +47,31 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adj
 | Response Decryption    	| `decrypt_http_response(plain_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
 | Response Re-encryption 	| `encrypt_http_response(plain_response, iResponseInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
 
-### I get it. But what should I write in the interface methods?
+### I get it. But what should I write in my Python script?
 
-Every interface methods above should returns a `Dictionary` object containing `headers` and `body` keys, denoting HTTP headers and HTTP body that you want to inject into Burpsuite's requests/responses.
+When creating a Python class that implements `IEncryptorDecryptor` interface, in most cases you will only need to override the above 4 methods according to your needs. 
 
-### Some Examples
-For example, XX.
+```python
+class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
+    @overrides(IEncryptorDecryptor)
+    def decrypt_http_request(self, plain_request, iRequestInfo):
+        req_body = IEncryptorDecryptor.get_http_body(plain_request, iRequestInfo)
+        key = "some_secure_r4ndom_keys_1337"
+        IV = "some_secure_r4ndom_IV_1337"
+
+        decrypted_body = myAlgorithmToDecrypt(req_body, key, IV)
+
+        return {
+            "headers": {
+                "X-API-Key": key,
+                "X-Some-Extra-Header": "you_can_inject_new_header_here_as_well"
+            },
+            "body": decrypted_body
+        }
+```
+
+Each of the methods you override should returns a `Dictionary` object containing **headers** and **body** attributes, denoting HTTP headers and HTTP body that you want to inject into Burpsuite's requests/responses.
 
 ## Installation
+
+## Contributors
