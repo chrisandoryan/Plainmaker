@@ -84,7 +84,6 @@ Hence, when Burpsuite intercepts an HTTP request or response, it will insert/upd
 
 ![Plainmaker Burp Preview 1](graphics/Plainmaker-Burp-Preview1.png)
 
-
 ## Installation
 
 ## Contributors
