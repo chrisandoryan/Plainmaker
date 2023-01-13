@@ -51,7 +51,6 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adj
 
 You have to create a Python class that implements `IEncryptorDecryptor` interface. Then, in most cases you will only need to override some of the 4 methods above according to your needs. 
 
-For example:
 ```python
 class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
     # Overrides decrypt_http_request() from IEncryptorDecryptor interface
