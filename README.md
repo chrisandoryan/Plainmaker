@@ -49,8 +49,9 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adj
 
 ### I get it. But what should I write in my Python script?
 
-When creating a Python class that implements `IEncryptorDecryptor` interface, in most cases you will only need to override some of the 4 methods above according to your needs. 
+You have to create a Python class that implements `IEncryptorDecryptor` interface. Then, in most cases you will only need to override some of the 4 methods above according to your needs. 
 
+For example:
 ```python
 class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
     # Overrides decrypt_http_request() from IEncryptorDecryptor interface
@@ -73,7 +74,7 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         }
 ```
 
-Each of the methods you override should returns a `Dictionary` object containing **headers** and **body** attributes, denoting HTTP headers and HTTP body that you want to inject into Burpsuite's requests/responses.
+Each of the methods you override should returns a `dictionary` value containing **headers** and **body** attributes, denoting HTTP headers and HTTP body that you want to inject into Burpsuite's requests/responses. Note that the **headers** attribute must be a `dictionary`, and the **body** attribute must be a `string`.
 
 ![Plainmaker Burp Preview 1](graphics/Plainmaker-Burp-Preview1.png)
 
