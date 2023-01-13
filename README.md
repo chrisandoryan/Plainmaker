@@ -53,6 +53,7 @@ You have to create a Python class that implements `IEncryptorDecryptor` interfac
 
 ```python
 class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
+    
     # Overrides decrypt_http_request() from IEncryptorDecryptor interface
     def decrypt_http_request(self, original_request, iRequestInfo):
         
@@ -65,7 +66,7 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         # ...
         decrypted_body = my_decryption_algorithm(req_body, key, IV)
 
-        # Should always return a dictionary containing 'headers' and 'body' attribute
+        # Should always return a dictionary containing 'headers' and 'body' attributes
         return {
             "headers": {
                 "X-API-Key": key,
@@ -75,7 +76,9 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         }
 ```
 
-Each of the methods you override should return a dictionary containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
+ In a nutshell, **Plainmaker** works by injecting your modified HTTP headers and HTTP body into Burpsuite.
+ 
+ Henceforth, each of the above methods you override should return a dictionary containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
 
 Hence, when Burpsuite intercepts an HTTP request or response, it will insert/update the headers and body from your dictionary into the original request or response.
 
