@@ -263,7 +263,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
     PROXY_HANDLER = 1
 
     def __init__(self):
-        # TODO: Create a new instance of your EncryptorDecryptor class here.
+        # TODO: Create a new instance of your encryptor-decryptor class here.
         encdec = MyCustomEncryptorDecryptor()
 
         self.encdec = encdec
