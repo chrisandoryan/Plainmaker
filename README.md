@@ -53,14 +53,17 @@ When creating a Python class that implements `IEncryptorDecryptor` interface, in
 
 ```python
 class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
-    @overrides(IEncryptorDecryptor)
+    # Overrides decrypt_http_request() from IEncryptorDecryptor interface
     def decrypt_http_request(self, original_request, iRequestInfo):
         req_body = IEncryptorDecryptor.get_http_body(original_request, iRequestInfo)
         key = "some_secure_r4ndom_keys_1337"
         IV = "some_secure_r4ndom_IV_1337"
 
+        # Run your decryption algorithm workflow here
+        # ...
         decrypted_body = my_decryption_algorithm(req_body, key, IV)
 
+        # Should always return a dictionary containing 'headers' and 'body' attribute
         return {
             "headers": {
                 "X-API-Key": key,

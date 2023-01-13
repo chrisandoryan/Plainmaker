@@ -88,13 +88,13 @@ class IEncryptorDecryptor():
             "body": "request=INJECTED_BY_PLAINMAKER_REQUEST_DECRYPTION"
         }
 
-    def encrypt_http_response(self, original_response, iResponseInfo):
+    def encrypt_http_response(self, plain_response, iResponseInfo):
         """
         Implement this method and perform a custom encryption algorithm and inject the encrypted values into HTTP response's statline, headers and body as the result.
 
         Parameters
         ----------
-        original_response : str
+        plain_response : str
             The received HTTP response in plain format
         iResponseInfo : interface
             A Burp's interface used to retrieve key details about an HTTP response.
@@ -116,13 +116,13 @@ class IEncryptorDecryptor():
             "body": "INJECTED_BY_PLAINMAKER_RESPONSE_ENCRYPTION"
         }
 
-    def decrypt_http_response(self, original_response, iResponseInfo):
+    def decrypt_http_response(self, plain_response, iResponseInfo):
         """
         Implement this method and perform a custom decryption algorithm and inject the decrypted values into HTTP response's statline, headers and body as the result.
 
         Parameters
         ----------
-        original_response : str
+        plain_response : str
             The received HTTP response in plain format
         iResponseInfo : interface
             A Burp's interface used to retrieve key details about an HTTP response.
@@ -160,20 +160,20 @@ class IEncryptorDecryptor():
         burp_request = self.modify_burp_request(original_request, iRequestInfo, request_data)
         return burp_request
 
-    def handle_http_response(self, original_response, iResponseInfo, operation_mode):
+    def handle_http_response(self, plain_response, iResponseInfo, operation_mode):
         """
         Return an injected/modified HTTP response in raw HTTP format
         """
 
         response_data = {}
         if (operation_mode == IEncryptorDecryptor.MODE_RESPONSE_ENCRYPT):
-            response_data = self.encrypt_http_response(original_response, iResponseInfo)
+            response_data = self.encrypt_http_response(plain_response, iResponseInfo)
         elif (operation_mode == IEncryptorDecryptor.MODE_RESPONSE_DECRYPT):
-            response_data = self.decrypt_http_response(original_response, iResponseInfo)
+            response_data = self.decrypt_http_response(plain_response, iResponseInfo)
         else:
             print("WARNING: unknown operation_mode: %s. Response will not be modified." % operation_mode)
 
-        burp_request = self.modify_burp_response(original_response, iResponseInfo, response_data)
+        burp_request = self.modify_burp_response(plain_response, iResponseInfo, response_data)
         return burp_request
 
         pass
@@ -197,7 +197,7 @@ class IEncryptorDecryptor():
 
         return custom_request
     
-    def modify_burp_response(self, original_response, iResponseInfo, response_data):
+    def modify_burp_response(self, plain_response, iResponseInfo, response_data):
         orig_headers_array = iResponseInfo.getHeaders()
 
         if len(orig_headers_array) > 0 and response_data['statline']:
@@ -351,8 +351,8 @@ class BrimoEncryptorDecryptor(IEncryptorDecryptor):
             "body": "request=%s" % plain
         }
 
-    def decrypt_http_response(self, original_response, iResponseInfo):
-        res_body = IEncryptorDecryptor.get_http_body(original_response, iResponseInfo)
+    def decrypt_http_response(self, plain_response, iResponseInfo):
+        res_body = IEncryptorDecryptor.get_http_body(plain_response, iResponseInfo)
         res_body_cleaned = res_body.replace('"', '')
         print("Response Body", res_body_cleaned)
 
@@ -377,8 +377,8 @@ class BrimoEncryptorDecryptor(IEncryptorDecryptor):
             "body": plain
         }
     
-    def encrypt_http_response(self, original_response, iResponseInfo):
-        res_body = IEncryptorDecryptor.get_http_body(original_response, iResponseInfo)
+    def encrypt_http_response(self, plain_response, iResponseInfo):
+        res_body = IEncryptorDecryptor.get_http_body(plain_response, iResponseInfo)
         print("Response Body", res_body)
 
         integrity_check = hashlib.md5(res_body).hexdigest().encode()
@@ -501,9 +501,9 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
                 new_req_bytes = FloydsHelpers.ps2jb(new_req)
                 messageInfo.setRequest(new_req_bytes)
         else:
-            original_response = FloydsHelpers.jb2ps(messageInfo.getResponse())
+            plain_response = FloydsHelpers.jb2ps(messageInfo.getResponse())
             iResponseInfo = self._helpers.analyzeResponse(messageInfo.getResponse())
-            print("Original Response", original_response)
+            print("Original Response", plain_response)
 
             # 3. Response Decryption Stage
             # If the message is HTTP response and the handler is iHttpListener, 
@@ -512,7 +512,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
                 print("3. Response Decryption Stage")
 
                 new_res = self.encdec.handle_http_response(
-                    original_response, 
+                    plain_response, 
                     iResponseInfo, 
                     operation_mode=IEncryptorDecryptor.MODE_RESPONSE_DECRYPT
                 )
@@ -527,7 +527,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
             else:
                 print("4. Response Re-encryption Stage")
                 new_res = self.encdec.handle_http_response(
-                    original_response, 
+                    plain_response, 
                     iResponseInfo, 
                     operation_mode=IEncryptorDecryptor.MODE_RESPONSE_ENCRYPT
                 )
