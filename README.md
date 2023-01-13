@@ -55,9 +55,11 @@ You have to create a Python class that implements `IEncryptorDecryptor` interfac
 class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
     # Overrides decrypt_http_request() from IEncryptorDecryptor interface
     def decrypt_http_request(self, original_request, iRequestInfo):
+        
+        # Get the original HTTP request body
         req_body = IEncryptorDecryptor.get_http_body(original_request, iRequestInfo)
-        key = "some_secure_r4ndom_keys_1337"
-        IV = "some_secure_r4ndom_IV_1337"
+        key = "secure_r4ndom_key_1337"
+        IV = "secure_r4ndom_IV_1338"
 
         # Run your decryption algorithm workflow here
         # ...
@@ -75,7 +77,7 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
 
 Each of the methods you override should return a dictionary containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
 
-Hence, when Burpsuite intercepts an HTTP request or response, it will insert the headers and body from your dictionary into the original request or response.
+Hence, when Burpsuite intercepts an HTTP request or response, it will insert/update the headers and body from your dictionary into the original request or response.
 
 ![Plainmaker Burp Preview 1](graphics/Plainmaker-Burp-Preview1.png)
 
