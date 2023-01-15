@@ -243,16 +243,28 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         super().__init__()
 
     def encrypt_http_request(self, original_request, iRequestInfo):
-        return super().encrypt_http_request(original_request, iRequestInfo)
+        return {
+            "headers": {},
+            "body": ""
+        }
     
     def encrypt_http_response(self, original_response, iResponseInfo):
-        return super().encrypt_http_response(original_response, iResponseInfo)
+        return {
+            "headers": {},
+            "body": ""
+        }
     
     def decrypt_http_request(self, original_request, iRequestInfo):
-        return super().decrypt_http_request(original_request, iRequestInfo)
+        return {
+            "headers": {},
+            "body": ""
+        }
     
     def decrypt_http_response(self, original_response, iResponseInfo):
-        return super().decrypt_http_response(original_response, iResponseInfo)
+        return {
+            "headers": {},
+            "body": ""
+        }
 
 #####################################################################
 # End of section.

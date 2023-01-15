@@ -51,6 +51,8 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adj
 
 You have to create a Python class that implements `IEncryptorDecryptor` interface. Then, in most cases you will only need to override some of the 4 methods above according to your needs. 
 
+Here is an implementation example to decrypt every HTTP request using static key (`secure_r4ndom_key_1337`) and IV (`secure_r4ndom_IV_1338`) and calling a user-defined function named `my_decryption_algorithm()`:
+
 ```python
 class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
     
@@ -76,14 +78,48 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         }
 ```
 
- In a nutshell, **Plainmaker** works by injecting your modified HTTP headers and HTTP body into Burpsuite.
- 
- Henceforth, each of the above methods you override should return a dictionary containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
+ In a nutshell, **Plainmaker** works by injecting your modified HTTP headers and HTTP body into Burpsuite. Henceforth, each of the above methods you override should return a dictionary containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
 
-Hence, when Burpsuite intercepts an HTTP request or response, it will insert/update the headers and body from your dictionary into the original request or response.
+Thus, when Burpsuite intercepts an HTTP request or response, it will insert/update the headers and body from your dictionary into the original request or response.
 
 ![Plainmaker Burp Preview 1](graphics/Plainmaker-Burp-Preview1.png)
 
 ## Installation
+### 1. Building the Plainmaker Extension
+In essence, there are two (2) "**TODO:**" marks that we have put into the `plainmaker.py` source code in this repository, indicating sections of code that you need to write/customize by yourself. Before installing the plugin into Burpsuite, you have to visit both sections and write your changes there.
+
+**TODO: Write and implement your own encryptor-decryptor class here.**
+```python
+#####################################################################
+# TODO: Write and implement your own encryptor-decryptor class here.
+#####################################################################
+
+class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
+    def __init__(self):
+        super().__init__()
+
+    def encrypt_http_request(self, original_request, iRequestInfo):
+        return {
+    
+    # ...
+```
+
+**TODO: Create a new instance of your encryptor-decryptor class here.**
+```python
+class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
+    HTTP_HANDLER = 0
+    PROXY_HANDLER = 1
+
+    def __init__(self):
+        # TODO: Create a new instance of your encryptor-decryptor class here.
+        encdec = MyCustomEncryptorDecryptor()
+
+    # ...
+```
+
+### 2. Installing Plainmaker Extension to Burpsuite
+
 
 ## Contributors
+- Chrisando 'siahaan' Ryan
+- Henky 'kazuya' Tornado
