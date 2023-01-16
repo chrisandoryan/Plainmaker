@@ -32,7 +32,7 @@ In hindsight, this is similar to what AESKiller is doing:
 However, there will be no static input boxes to insert an AES key and IV; you have the freedom to <ins>implement the flow of the encryption/decryption by yourself</ins>.
 
 ### Huh? Then?
-Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adjust it into a Python class that implements `IEncryptDecrypt` interface, and *voila*. **The encrypted/decrypted values will be injected into Burpsuite's requests/responses automatically.**
+Simply take your encryption/decryption script (like Jojo's `crypt.py`), then rewrite it into a Python class that implements `IEncryptDecrypt` interface, and *voila*. **The encrypted/decrypted values will be injected into Burpsuite's requests/responses automatically.**
 
 ## How It Works
 
@@ -47,25 +47,25 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adj
 | Response Decryption    	| `decrypt_http_response(original_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
 | Response Re-encryption 	| `encrypt_http_response(original_response, iResponseInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
 
-Furthermore, every methods above receives two (2) method parameters, `original_request` or `original_response` and `iRequestInfo` or `iResponseInfo`.
+The methods above receive two (2) parameters by design, `original_request` or `original_response` and `iRequestInfo` or `iResponseInfo`.
 
-**original_request**
+**original_request: string**
 
 A parameter that contains the original HTTP request in Python string format.
 
-**original_response**
+**original_response: string**
 
 A parameter that contains the original HTTP response in Python string format.
 
-**iRequestInfo** 
+**iRequestInfo: object** 
 
 A parameter that contains Burp interface object used to retrieve key details about the HTTP requests. See [iRequestInfo](https://portswigger.net/burp/extender/api/burp/irequestinfo.html) for more information.
 
-**iResponseInfo** 
+**iResponseInfo: object** 
 
 A parameter that contains Burp interface object used to retrieve key details about the HTTP responses. See [iResponseInfo](https://portswigger.net/burp/extender/api/burp/iresponseinfo.html) for more information.
 
-### Quick Start (Example)
+## Quick Start (Example)
 
 You have to create a Python class that implements `IEncryptorDecryptor` interface. Then, in most cases you will only need to override some of the 4 methods above according to your needs. 
 
