@@ -86,7 +86,8 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         # ...
         decrypted_body = my_decryption_algorithm(req_body, key, IV)
 
-        # Should always return a dictionary containing 'headers' and 'body' attributes. The decrypted request body is returned here.
+        # Should always return a dictionary containing 'headers' and 'body' attributes. 
+        # The decrypted request body is returned here.
         return {
             "headers": {
                 "X-API-Key": key,
@@ -96,7 +97,7 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         }
 ```
 
- In a nutshell, **Plainmaker** works by injecting your modified HTTP headers and HTTP body into Burpsuite. Henceforth, each of the above methods you override should return a `dictionary` containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
+ In a nutshell, **Plainmaker** works by injecting your modified HTTP headers and HTTP body into Burpsuite. Henceforth, each of the interface methods you override should return a `dictionary` containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
 
 Thus, when Burpsuite intercepts an HTTP request or response, it will insert/update the headers and body from your dictionary into the original request or response.
 
@@ -147,12 +148,14 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
     # ...
 ```
 
-Burpsuite's extension logics and workflow is placed in another class named `BurpExtender`. Hence, in this **TODO:** section, you have to create a new instance of your encryptor-decryptor class and store it into a variable named `encdec` that belongs to `BurpExtender` class.
+Burpsuite's extension logics and workflow is placed in another class named `BurpExtender`. Hence, in this **TODO:** section, you have to create a new instance of your encryptor-decryptor class and store it into a variable named `encdec` inside the `BurpExtender` class.
 
 *See [samples](https://github.com/chrisandoryan/Plainmaker/tree/main/samples) directory for detailed examples.*
 
 ### 2. Installing Plainmaker Extension to Burpsuite
-
+Use the following tutorials to install Python-based  extension (like **Plainmaker**) into Burpsuite.
+1. Install Jython: https://burpsuite.guide/runtimes/python/
+2. Install Python extension into Burpsuite: https://portswigger.net/burp/documentation/desktop/extensions/installing-extensions
 
 ## Contributors
 - Chrisando 'siahaan' Ryan
