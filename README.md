@@ -78,7 +78,7 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         }
 ```
 
- In a nutshell, **Plainmaker** works by injecting your modified HTTP headers and HTTP body into Burpsuite. Henceforth, each of the above methods you override should return a dictionary containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
+ In a nutshell, **Plainmaker** works by injecting your modified HTTP headers and HTTP body into Burpsuite. Henceforth, each of the above methods you override should return a `dictionary` containing two attributes: **headers** and **body**. These attributes represent the HTTP headers and body that you want to add to the original request or response. 
 
 Thus, when Burpsuite intercepts an HTTP request or response, it will insert/update the headers and body from your dictionary into the original request or response.
 
@@ -88,7 +88,7 @@ Thus, when Burpsuite intercepts an HTTP request or response, it will insert/upda
 ### 1. Building the Plainmaker Extension
 In essence, there are two (2) "**TODO:**" marks that we have put into the `plainmaker.py` source code in this repository, indicating sections of code that you need to write/customize by yourself. Before installing the plugin into Burpsuite, you have to visit both sections and write your changes there.
 
-**TODO: Write and implement your own encryptor-decryptor class here.**
+**A. Write and implement your own encryptor-decryptor class.**
 ```python
 #####################################################################
 # TODO: Write and implement your own encryptor-decryptor class here.
@@ -104,7 +104,19 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
     # ...
 ```
 
-**TODO: Create a new instance of your encryptor-decryptor class here.**
+In this **TODO:** section, you need to create a new Python class that implements `IEncryptorDecryptor` interface.
+
+After that, according to your needs, you might want to override any of the following available methods: 
+- `decrypt_http_request()`
+- `decrypt_http_response()`
+- `encrypt_http_request()`
+- `encrypt_http_response()`
+
+In each of those methods, implement the encryption/decryption code that fits the cryptographic operation of your application, then return a `dictionary` object containing two attributes: **headers** and **body**. The returned values will be injected into Burpsuite when it displays the intercepted HTTP requests or responses.
+
+*See [samples](https://github.com/chrisandoryan/Plainmaker/tree/main/samples) directory for detailed examples.*
+
+**B. Create a new instance of your encryptor-decryptor class.**
 ```python
 class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
     HTTP_HANDLER = 0
@@ -116,6 +128,10 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
 
     # ...
 ```
+
+Burpsuite's extension logics and workflow is placed in another class named `BurpExtender`. Hence, in this **TODO:** section, you have to create a new instance of your encryptor-decryptor class and store it into a variable named `encdec` that belongs to `BurpExtender` class.
+
+*See [samples](https://github.com/chrisandoryan/Plainmaker/tree/main/samples) directory for detailed examples.*
 
 ### 2. Installing Plainmaker Extension to Burpsuite
 
