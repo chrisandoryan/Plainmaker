@@ -19,10 +19,10 @@ So, if sometimes in the future you find yourself suffering like Jojo, this repos
 
 ## Features
 
-- Provides a fully-customizable and implementable Interface class, named `IEncryptorDecryptor` for creating your own Burpsuite Plugin/Extension.
-- `IEncryptorDecryptor` interface allows you to implement your custom encryption/decryption script and integrate them directly into Burpsuite requests and responses.
+- Fully-customizable and implementable Interface class for creating your own Burpsuite Extension.
+- Implement your custom encryption/decryption code and integrate them directly into Burpsuite requests and responses.
 - Total control over the encryption/decryption flow and choice of algorithms (e.g. AES, RSA, DES, etc.).
-- Written in Python/Jython 2.7.3 and easily integrated into your Burpsuite workflow.
+- Written in Python/Jython 2.7.3.
 
 ## What It Does
 In hindsight, this is similar to what AESKiller is doing:
