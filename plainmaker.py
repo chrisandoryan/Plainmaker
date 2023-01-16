@@ -18,6 +18,13 @@ from javax.crypto.spec import IvParameterSpec
 from javax.crypto.spec import GCMParameterSpec
 from javax.crypto.spec import SecretKeySpec
 
+"""
+Plainmaker Extension
+https://github.com/chrisandoryan/Plainmaker
+
+Created by Chrisando Ryan
+"""
+
 NAME = "Plainmaker"
 
 class IEncryptorDecryptor():
