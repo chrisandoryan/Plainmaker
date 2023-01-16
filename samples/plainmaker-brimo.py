@@ -2,9 +2,6 @@ from burp import IBurpExtender
 from burp import IHttpListener
 from burp import IProxyListener
 from burp import IBurpExtenderCallbacks
-from burp import IMessageEditorTabFactory
-from burp import IMessageEditorTab
-from burp import IParameter
 
 import datetime
 import hmac
@@ -242,6 +239,10 @@ class IEncryptorDecryptor():
         req_body = plain[iReqResInfo.getBodyOffset():]
         return req_body
 
+#####################################################################
+# TODO: Write and implement your own encryptor-decryptor class here.
+#####################################################################
+
 class BrimoEncryptorDecryptor(IEncryptorDecryptor):
     def __init__(self, secret_phrase, device_id, aes_key):
         self.increment = 0
@@ -403,12 +404,17 @@ class BrimoEncryptorDecryptor(IEncryptorDecryptor):
             "body": full_response
         }
 
-class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorTabFactory):
+#####################################################################
+# End of section.
+#####################################################################
+
+
+class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
     HTTP_HANDLER = 0
     PROXY_HANDLER = 1
 
     def __init__(self):
-        # Create a new instance of your EncryptorDecryptor class here.
+        # TODO: Create a new instance of your encryptor-decryptor class here.
         encdec = BrimoEncryptorDecryptor(
             secret_phrase="fahrdrgr",
             device_id="KOJ3zSW5PCI3jerRaqUISGQ/rf19l3Zm8/5Nxageu5jELHgUsDtiBoAR0FVSRnSt",
@@ -431,18 +437,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
         callbacks.registerHttpListener(self)
         callbacks.registerProxyListener(self)
 
-        # register ourselves as a message editor tab factory
-        callbacks.registerMessageEditorTabFactory(self)
-
         print("Loaded " + NAME + " successfully!")
-
-    # 
-    # implement IMessageEditorTabFactory
-    #
-    
-    def createNewInstance(self, controller, editable):
-        self.plainmaker_tab = PlainmakerTab(self, controller, editable)
-        return self.plainmaker_tab
 
     #
     # implement IHttpListener
@@ -537,61 +532,6 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IMessageEditorT
                 messageInfo.setResponse(new_res_bytes)
 
         pass
-
-class PlainmakerTab(IMessageEditorTab):
-    def __init__(self, extender, controller, editable):
-        self._extender = extender
-        self._editable = editable
-        
-        # create an instance of Burp's text editor, to display our deserialized data
-        self._txtInput = extender._callbacks.createTextEditor()
-        self._txtInput.setEditable(editable)
-        
-    #
-    # implement IMessageEditorTab
-    #
-
-    def getTabCaption(self):
-        return "Plainmaker"
-        
-    def getUiComponent(self):
-        return self._txtInput.getComponent()
-        
-    def isEnabled(self, content, isRequest):
-        return isRequest and self._extender._helpers.getRequestParameter(content, "data") is not None
-        
-    def setMessage(self, content, isRequest):
-        if content is None:
-            # clear our display
-            self._txtInput.setText(None)
-            self._txtInput.setEditable(False)
-        
-        else:
-            print("Tab Content", content)
-            self._txtInput.setText(content)
-            self._txtInput.setEditable(self._editable)
-        
-        # remember the displayed content
-        self._currentMessage = content
-    
-    def getMessage(self):
-        # determine whether the user modified the deserialized data
-        if self._txtInput.isTextModified():
-            # reserialize the data
-            text = self._txtInput.getText()
-            input = self._extender._helpers.urlEncode(self._extender._helpers.base64Encode(text))
-            
-            # update the request with the new parameter value
-            return self._extender._helpers.updateParameter(self._currentMessage, self._extender._helpers.buildParameter("data", input, IParameter.PARAM_BODY))
-            
-        else:
-            return self._currentMessage
-    
-    def isModified(self):
-        return self._txtInput.isTextModified()
-    
-    def getSelectedData(self):
-        return self._txtInput.getSelectedText()
 
 class FloydsHelpers(object):
     @staticmethod

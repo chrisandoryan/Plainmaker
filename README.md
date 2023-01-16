@@ -47,7 +47,25 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then adj
 | Response Decryption    	| `decrypt_http_response(original_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
 | Response Re-encryption 	| `encrypt_http_response(original_response, iResponseInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
 
-### I get it. But what should I write in my Python script?
+Furthermore, every methods above receives two (2) method parameters, `original_request` or `original_response` and `iRequestInfo` or `iResponseInfo`.
+
+**original_request**
+
+A parameter that contains the original HTTP request in Python string format.
+
+**original_response**
+
+A parameter that contains the original HTTP response in Python string format.
+
+**iRequestInfo** 
+
+A parameter that contains Burp interface object used to retrieve key details about the HTTP requests. See [iRequestInfo](https://portswigger.net/burp/extender/api/burp/irequestinfo.html) for more information.
+
+**iResponseInfo** 
+
+A parameter that contains Burp interface object used to retrieve key details about the HTTP responses. See [iResponseInfo](https://portswigger.net/burp/extender/api/burp/iresponseinfo.html) for more information.
+
+### Quick Start (Example)
 
 You have to create a Python class that implements `IEncryptorDecryptor` interface. Then, in most cases you will only need to override some of the 4 methods above according to your needs. 
 
@@ -106,7 +124,7 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
 
 In this **TODO:** section, you need to create a new Python class that implements `IEncryptorDecryptor` interface.
 
-After that, according to your needs, you might want to override any of the following available methods: 
+After that, according to your needs, you might want to override any of the following available methods according to your needs: 
 - `decrypt_http_request()`
 - `decrypt_http_response()`
 - `encrypt_http_request()`
