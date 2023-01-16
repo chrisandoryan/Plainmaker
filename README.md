@@ -148,7 +148,9 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
     # ...
 ```
 
-Burpsuite's extension logics and workflow is placed in another class named `BurpExtender`. Hence, in this **TODO:** section, you have to create a new instance of your encryptor-decryptor class and store it into a variable named `encdec` inside the `BurpExtender` class.
+Burpsuite's extension logics and workflow is placed in another class named `BurpExtender`. Hence, in this **TODO:** section, you have to create a new instance of your encryptor-decryptor class and store it into a variable named `encdec` inside the `BurpExtender` class. 
+
+Then, that's all. Every interface methods that you have overridden will be called automatically when Burpsuite receives HTTP requests and responses.
 
 *See [samples](https://github.com/chrisandoryan/Plainmaker/tree/main/samples) directory for detailed examples.*
 
