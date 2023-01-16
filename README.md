@@ -47,7 +47,7 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then rew
 | Response Decryption    	| `decrypt_http_response(original_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
 | Response Re-encryption 	| `encrypt_http_response(original_response, iResponseInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
 
-The methods above receive two (2) parameters by design, `original_request` or `original_response` and `iRequestInfo` or `iResponseInfo`.
+Every methods above receives two (2) parameters by design, `original_request` or `original_response` and `iRequestInfo` or `iResponseInfo`.
 
 **original_request: string**
 
@@ -67,9 +67,9 @@ A parameter that contains Burp interface object used to retrieve key details abo
 
 ## Quick Start (Example)
 
-You have to create a Python class that implements `IEncryptorDecryptor` interface. Then, in most cases you will only need to override some of the 4 methods above according to your needs. 
+First, you have to create a Python class that implements `IEncryptorDecryptor` interface. Then, in most cases you will only need to override some of the 4 interface methods above according to your needs. 
 
-Here is an implementation example to decrypt every HTTP request using static key (`secure_r4ndom_key_1337`) and IV (`secure_r4ndom_IV_1338`) and calling a user-defined function named `my_decryption_algorithm()`:
+Here is an implementation example to decrypt every HTTP request using a static key (`secure_r4ndom_key_1337`) and IV (`secure_r4ndom_IV_1338`) and then calls a user-defined function named `my_decryption_algorithm()` to decrypt the content of the HTTP request body:
 
 ```python
 class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
@@ -86,7 +86,7 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
         # ...
         decrypted_body = my_decryption_algorithm(req_body, key, IV)
 
-        # Should always return a dictionary containing 'headers' and 'body' attributes
+        # Should always return a dictionary containing 'headers' and 'body' attributes. The decrypted request body is returned here.
         return {
             "headers": {
                 "X-API-Key": key,
