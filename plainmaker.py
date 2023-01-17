@@ -106,7 +106,7 @@ class IEncryptorDecryptor():
         Returns
         -------
         dict
-            A dictionary that contains Status Line ('statline'), Headers ('headers') and Body ('body') attributes of the HTTP response.
+            A dictionary that contains Headers ('headers') and Body ('body') attributes of the HTTP response.
         """
 
         return {
@@ -133,7 +133,7 @@ class IEncryptorDecryptor():
         Returns
         -------
         dict
-            A dictionary that contains Status Line ('statline'), Headers ('headers') and Body ('body') attributes of the HTTP response.
+            A dictionary that contains Headers ('headers') and Body ('body') attributes of the HTTP response.
         """
 
         return {
