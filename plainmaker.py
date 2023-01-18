@@ -182,14 +182,15 @@ class IEncryptorDecryptor():
 
     def modify_burp_request(self, original_request, iRequestInfo, request_data):
         orig_headers_array = iRequestInfo.getHeaders()
+        orig_body = IEncryptorDecryptor.get_http_body(original_request, iRequestInfo)
 
-        tampered_body = request_data['body']
+        tampered_body = request_data['body'] or orig_body
         tampered_headers = orig_headers_array
         for key, value in request_data['headers'].items():
             h_change_index = FloydsHelpers.index_containing_substring(tampered_headers, key)
             header = "%s: %s" % (key, value, )
 
-            if (h_change_index):
+            if (h_change_index != -1):
                 tampered_headers[h_change_index] = header
             else:
                 tampered_headers.append(header)
@@ -201,14 +202,15 @@ class IEncryptorDecryptor():
     
     def modify_burp_response(self, original_response, iResponseInfo, response_data):
         orig_headers_array = iResponseInfo.getHeaders()
+        orig_body = IEncryptorDecryptor.get_http_body(original_response, iResponseInfo)
 
-        tampered_body = response_data['body']
+        tampered_body = response_data['body'] or orig_body
         tampered_headers = orig_headers_array
         for key, value in response_data['headers'].items():
             h_change_index = FloydsHelpers.index_containing_substring(tampered_headers, key)
             header = "%s: %s" % (key, value, )
 
-            if (h_change_index):
+            if (h_change_index != -1):
                 tampered_headers[h_change_index] = header
             else:
                 tampered_headers.append(header)
