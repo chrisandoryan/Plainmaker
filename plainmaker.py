@@ -254,25 +254,25 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor, object):
     def encrypt_http_request(self, original_request, iRequestInfo):
         return {
             "headers": {},
-            "body": ""
+            "body": False
         }
     
     def encrypt_http_response(self, original_response, iResponseInfo):
         return {
             "headers": {},
-            "body": ""
+            "body": False
         }
     
     def decrypt_http_request(self, original_request, iRequestInfo):
         return {
             "headers": {},
-            "body": ""
+            "body": False
         }
     
     def decrypt_http_response(self, original_response, iResponseInfo):
         return {
             "headers": {},
-            "body": ""
+            "body": False
         }
 
 #####################################################################
@@ -403,7 +403,7 @@ class FloydsHelpers(object):
     def index_containing_substring(the_list, substring):
         substring = substring.lower()
         for i, s in enumerate(the_list):
-            if substring in s.lower():
+            if substring == s[:len(substring)].lower():
                 return i
         return -1
 
