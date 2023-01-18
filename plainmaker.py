@@ -247,9 +247,9 @@ class IEncryptorDecryptor():
 # TODO: Write and implement your own encryptor-decryptor class here.
 #####################################################################
 
-class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
+class MyCustomEncryptorDecryptor(IEncryptorDecryptor, object):
     def __init__(self):
-        super().__init__()
+        super(MyCustomEncryptorDecryptor, self).__init__()
 
     def encrypt_http_request(self, original_request, iRequestInfo):
         return {
@@ -440,11 +440,16 @@ class FloydsHelpers(object):
     
     @staticmethod
     def fix_content_length(headers, length, newline):
-        for index, x in enumerate(headers):
-            if "content-length:" == x[:len("content-length:")].lower():
-                headers[index] = x[:len("content-length:")] + " " + str(length)
-                return newline.join(headers)
+        if length > 0:
+            exists = False
+            for index, x in enumerate(headers):
+                if "content-length:" == x[:len("content-length:")].lower():
+                    headers[index] = x[:len("content-length:")] + " " + str(length)
+                    exists = True
+            if not exists:
+                print("WARNING: Couldn't find Content-Length header in request, simply adding this header")
+                headers.insert(1, "Content-Length: " + str(length))
         else:
-            print("WARNING: Couldn't find Content-Length header in request, simply adding this header")
-            headers.insert(1, "Content-Length: " + str(length))
-            return newline.join(headers)
+            print("WARNING: content-length is 0, not injecting header")
+        
+        return newline.join(headers)
