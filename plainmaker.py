@@ -55,7 +55,7 @@ class IEncryptorDecryptor():
 
         return {
             "headers": {
-                "Host": "brimo.bri.co.id",
+                "Host": "example.com",
                 "X-Device-Id": "INJECTED_BY_PLAINMAKER_REQUEST_ENCRYPTION",
                 "X-Random-Key": "INJECTED_BY_PLAINMAKER_REQUEST_ENCRYPTION",
                 "User-Agent": "INJECTED_BY_PLAINMAKER_REQUEST_ENCRYPTION",
@@ -83,7 +83,7 @@ class IEncryptorDecryptor():
 
         return {
             "headers": {
-                "Host": "brimo.bri.co.id",
+                "Host": "example.com",
                 "X-Device-Id": "INJECTED_BY_PLAINMAKER_REQUEST_DECRYPTION",
                 "X-Random-Key": "INJECTED_BY_PLAINMAKER_REQUEST_DECRYPTION",
                 "User-Agent": "INJECTED_BY_PLAINMAKER_REQUEST_DECRYPTION",
@@ -106,7 +106,7 @@ class IEncryptorDecryptor():
         Returns
         -------
         dict
-            A dictionary that contains Status Line ('statline'), Headers ('headers') and Body ('body') attributes of the HTTP response.
+            A dictionary that contains Headers ('headers') and Body ('body') attributes of the HTTP response.
         """
 
         return {
@@ -133,7 +133,7 @@ class IEncryptorDecryptor():
         Returns
         -------
         dict
-            A dictionary that contains Status Line ('statline'), Headers ('headers') and Body ('body') attributes of the HTTP response.
+            A dictionary that contains Headers ('headers') and Body ('body') attributes of the HTTP response.
         """
 
         return {
