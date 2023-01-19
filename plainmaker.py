@@ -322,7 +322,6 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
 
     def filter_message(self, handler, messageIsRequest, messageInfo):
         iRequestInfo = self._helpers.analyzeRequest(messageInfo)
-        print("MessageInfo", messageInfo)
         if not iRequestInfo.getUrl():
             print("iRequestInfo.getUrl() returned None, so bailing out of analyzing this request")
             return
