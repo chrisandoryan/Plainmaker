@@ -162,21 +162,6 @@ Use the following tutorials to install Python-based  extension (like **Plainmake
 ## Frequently Asked Questions (FAQ)
 ### What if I don't want to modify Burpsuite's original HTTP headers/body on a certain encryption-decryption stages?
 Suppose you don't want to modify both HTTP headers and body on the **Request Re-encryption** stage, then in the overridden `encrypt_http_request()` method you simply set the **headers** and **body** attribute into **False**.
-```
-# The HTTP headers and body specified below WILL BE injected into Burpsuite.
-{
-    "headers": {
-        "X-Some-Extra-Header": "you_can_inject_new_header_here_as_well"
-    },
-    "body": "some_body"
-}
-
-# Burpsuite's original HTTP headers and body WILL NOT BE replaced or modified at all.
-{
-    "headers": False,
-    "body": False
-}
-```
 
 ## Contributors
 - Chrisando 'siahaan' Ryan
