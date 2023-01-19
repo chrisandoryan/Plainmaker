@@ -126,10 +126,10 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
 In this **TODO:** section, you need to create a new Python class that implements `IEncryptorDecryptor` interface.
 
 After that, according to your needs, you might want to override any of the following available methods according to your needs: 
-- `decrypt_http_request()`
-- `decrypt_http_response()`
-- `encrypt_http_request()`
-- `encrypt_http_response()`
+- `decrypt_http_request(original_request, iRequestInfo)`
+- `decrypt_http_response(original_response, iResponseInfo)`
+- `encrypt_http_request(original_request, iRequestInfo)`
+- `encrypt_http_response(original_response, iResponseInfo)`
 
 In each of those methods, implement the encryption/decryption code that fits the cryptographic operation of your application, then return a `dictionary` object containing two attributes: **headers** and **body**. The returned values will be injected into Burpsuite when it displays the intercepted HTTP requests or responses.
 
@@ -158,6 +158,25 @@ Then, that's all. Every interface methods that you have overridden will be calle
 Use the following tutorials to install Python-based  extension (like **Plainmaker**) into Burpsuite.
 1. Install Jython: https://burpsuite.guide/runtimes/python/
 2. Install Python extension into Burpsuite: https://portswigger.net/burp/documentation/desktop/extensions/installing-extensions
+
+## Frequently Asked Questions (FAQ)
+### What if I don't want to modify Burpsuite's original HTTP headers/body on certain encryption-decryption stages?
+Suppose you don't want to modify both HTTP headers and body on **Request Re-encryption** stage, then on the overriden `encrypt_http_request` method you simply set the **headers** and **body** attribute into False.
+```
+# The HTTP headers and body specified below will be injected into Burpsuite.
+{
+    "headers": {
+        "X-Some-Extra-Header": "you_can_inject_new_header_here_as_well"
+    },
+    "body": "some_body"
+}
+
+# Burpsuite's HTTP headers and body will not be replaced or modified at all.
+{
+    "headers": False,
+    "body": False
+}
+```
 
 ## Contributors
 - Chrisando 'siahaan' Ryan
