@@ -160,8 +160,8 @@ Use the following tutorials to install Python-based  extension (like **Plainmake
 2. Install Python extension into Burpsuite: https://portswigger.net/burp/documentation/desktop/extensions/installing-extensions
 
 ## Frequently Asked Questions (FAQ)
-### What if I don't want to modify Burpsuite's original HTTP headers/body on certain encryption-decryption stages?
-Suppose you don't want to modify both HTTP headers and body on **Request Re-encryption** stage, then in the overriden `encrypt_http_request()` method you simply set the **headers** and **body** attribute into **False**.
+### What if I don't want to modify Burpsuite's original HTTP headers/body on a certain encryption-decryption stages?
+Suppose you don't want to modify both HTTP headers and body on the **Request Re-encryption** stage, then in the overridden `encrypt_http_request()` method you simply set the **headers** and **body** attribute into **False**.
 ```
 # The HTTP headers and body specified below WILL BE injected into Burpsuite.
 {
