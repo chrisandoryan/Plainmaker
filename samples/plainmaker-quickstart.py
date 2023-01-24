@@ -25,7 +25,7 @@ https://github.com/chrisandoryan/Plainmaker
 Created by Chrisando Ryan
 """
 
-NAME = "Plainmaker"
+NAME = "Plainmaker - Quickstart"
 
 class IEncryptorDecryptor():
     MODE_REQUEST_ENCRYPT = 0
@@ -231,26 +231,48 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor, object):
 
     def encrypt_http_request(self, original_request, iRequestInfo):
         return {
-            "headers": {},
-            "body": False
+            "headers": {
+                "Host": "example.com",
+                "X-Device-Id": "INJECTED_BY_PLAINMAKER_REQUEST_ENCRYPTION",
+                "X-Random-Key": "INJECTED_BY_PLAINMAKER_REQUEST_ENCRYPTION",
+                "User-Agent": "INJECTED_BY_PLAINMAKER_REQUEST_ENCRYPTION",
+                "X-Extra-Header": "INJECTED_BY_PLAINMAKER_REQUEST_ENCRYPTION"
+            },
+            "body": "request=INJECTED_BY_PLAINMAKER_REQUEST_ENCRYPTION"
         }
     
     def encrypt_http_response(self, original_response, iResponseInfo):
         return {
-            "headers": {},
-            "body": False
+            "headers": {
+                "date": "INJECTED_BY_PLAINMAKER_RESPONSE_ENCRYPTION",
+                "cache-control": "INJECTED_BY_PLAINMAKER_RESPONSE_ENCRYPTION",
+                "pragma": "INJECTED_BY_PLAINMAKER_RESPONSE_ENCRYPTION",
+                "x-frame-options": "INJECTED_BY_PLAINMAKER_RESPONSE_ENCRYPTION"
+            },
+            "body": "INJECTED_BY_PLAINMAKER_RESPONSE_ENCRYPTION"
         }
     
     def decrypt_http_request(self, original_request, iRequestInfo):
         return {
-            "headers": {},
-            "body": False
+            "headers": {
+                "Host": "example.com",
+                "X-Device-Id": "INJECTED_BY_PLAINMAKER_REQUEST_DECRYPTION",
+                "X-Random-Key": "INJECTED_BY_PLAINMAKER_REQUEST_DECRYPTION",
+                "User-Agent": "INJECTED_BY_PLAINMAKER_REQUEST_DECRYPTION",
+                "X-Extra-Header": "INJECTED_BY_PLAINMAKER_REQUEST_DECRYPTION"
+            },
+            "body": "request=INJECTED_BY_PLAINMAKER_REQUEST_DECRYPTION"
         }
     
     def decrypt_http_response(self, original_response, iResponseInfo):
         return {
-            "headers": {},
-            "body": False
+            "headers": {
+                "date": "INJECTED_BY_PLAINMAKER_RESPONSE_DECRYPTION",
+                "cache-control": "INJECTED_BY_PLAINMAKER_RESPONSE_DECRYPTION",
+                "pragma": "INJECTED_BY_PLAINMAKER_RESPONSE_DECRYPTION",
+                "x-frame-options": "INJECTED_BY_PLAINMAKER_RESPONSE_DECRYPTION"
+            },
+            "body": "INJECTED_BY_PLAINMAKER_RESPONSE_DECRYPTION"
         }
 
 #####################################################################
