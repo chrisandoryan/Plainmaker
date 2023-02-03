@@ -11,6 +11,7 @@ import hashlib
 from urlparse import urlparse
 from urllib import unquote, quote_plus
 from base64 import b64encode, b64decode
+from subprocess import Popen, PIPE
 
 # Jython imports
 from javax.crypto import Cipher
@@ -221,6 +222,20 @@ class IEncryptorDecryptor():
         req_body = plain[iReqResInfo.getBodyOffset():]
         return req_body
 
+    @staticmethod
+    def run_external_script(path_to_script, *args):
+        cmd = ["python3", path_to_script] + list(args)
+
+        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        output = proc.stdout.read()
+        proc.stdout.close()
+
+        err = proc.stderr.read()
+        proc.stderr.close()
+        sys.stdout.write(err)
+
+        return output
+
 #####################################################################
 # TODO: Write and implement your own encryptor-decryptor class here.
 #####################################################################
@@ -289,7 +304,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
     #
 
     def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):
-        if toolFlag == IBurpExtenderCallbacks.TOOL_PROXY:
+        if toolFlag == IBurpExtenderCallbacks.TOOL_PROXY or toolFlag ==  IBurpExtenderCallbacks.TOOL_INTRUDER or toolFlag == IBurpExtenderCallbacks.TOOL_REPEATER:
             self.filter_message(self.HTTP_HANDLER, messageIsRequest, messageInfo)
 
     #
