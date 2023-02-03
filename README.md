@@ -10,7 +10,7 @@ However, since <ins>it is a script</ins>, then Jojo must copy the values outputt
 ![Jojo's Illustration](graphics/JojosTrouble.gif)
 
 Using <a href="https://github.com/Ebryx/AES-Killer" target="_blank">AESKiller</a> is also not an option because, for example: 
-- The mobile application uses a unique AES encryption method that involves different keys and initialization vectors for encrypting and decrypting.
+- The mobile application uses a unique AES encryption method that involves different keys and initialization vectors for encrypting HTTP request and HTTP response.
 - Certain calculations (such as XOR) must be performed on the key or initialization vector before it can be used in the encryption/decryption process.
 - The key or initialization vector is generated dynamically or must be obtained from somewhere within the HTTP request or response.
 - The mobile application may not be using AES encryption/decryption at all.
