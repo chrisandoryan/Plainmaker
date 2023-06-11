@@ -218,6 +218,11 @@ class IEncryptorDecryptor():
         return req_uri
     
     @staticmethod
+    def get_request_params(iRequestInfo):
+        req_params = urlparse(str(iRequestInfo.getUrl())).query
+        return req_params
+    
+    @staticmethod
     def get_http_body(plain, iReqResInfo):
         req_body = plain[iReqResInfo.getBodyOffset():]
         return req_body
