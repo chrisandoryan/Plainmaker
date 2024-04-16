@@ -44,10 +44,10 @@ Simply take your encryption/decryption script (like Jojo's `crypt.py`), then rew
 |------------------------	|--------------------------------------------------------	|-------------------------------------------------------------------------------------------------------------------------------------------	|
 | Request Decryption     	| `decrypt_http_request(original_request, iRequestInfo)`    	| When the HTTP request is encrypted and you want Burpsuite to display it in the decrypted format.                                                                            	|
 | Request Re-encryption  	| `encrypt_http_request(original_request, iRequestInfo)`    	| When the decrypted HTTP request has been modified and you want to re-encrypt it so that it stays valid upon received by the server..      	|
-| Response Decryption    	| `decrypt_http_response(original_response, iResponseInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
-| Response Re-encryption 	| `encrypt_http_response(original_response, iResponseInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
+| Response Decryption    	| `decrypt_http_response(original_response, iResponseInfo, iResReqInfo)` 	| When the HTTP response is encrypted and you want Burpsuite to display it in the decrypted format.                                                                           	|
+| Response Re-encryption 	| `encrypt_http_response(original_response, iResponseInfo, iResReqInfo)` 	| When the decrypted HTTP response has been modified and you want to re-encrypt it so that it stays valid upon received by the application. 	|
 
-Every methods above receives two (2) parameters by design, `original_request` or `original_response` and `iRequestInfo` or `iResponseInfo`.
+Request process receives two (2) parameters by design, `original_request` and `iRequestInfo`, then Response process receives three (3) parameters by design, `original_response`, `iResponseInfo` and `iResReqInfo`.
 
 **original_request: string**
 
@@ -64,6 +64,10 @@ A parameter that contains Burp interface object used to retrieve key details abo
 **iResponseInfo: object** 
 
 A parameter that contains Burp interface object used to retrieve key details about the HTTP responses. See [iResponseInfo](https://portswigger.net/burp/extender/api/burp/iresponseinfo.html) for more information.
+
+**iResReqInfo: object** 
+
+A parameter that contains Burp interface object used to retrieve key details about the HTTP requests related to the responses. See [iResponseInfo](https://portswigger.net/burp/extender/api/burp/irequestinfo.html) for more information.
 
 ## Quick Start (Example)
 
@@ -127,9 +131,9 @@ In this **TODO:** section, you need to create a new Python class that implements
 
 After that, according to your needs, you might want to override any of the following available methods according to your needs: 
 - `decrypt_http_request(original_request, iRequestInfo)`
-- `decrypt_http_response(original_response, iResponseInfo)`
+- `decrypt_http_response(original_response, iResponseInfo, iResReqInfo)`
 - `encrypt_http_request(original_request, iRequestInfo)`
-- `encrypt_http_response(original_response, iResponseInfo)`
+- `encrypt_http_response(original_response, iResponseInfo, iResReqInfo)`
 
 In each of those methods, implement the encryption/decryption code that fits the cryptographic operation of your application, then return a `dictionary` object containing two attributes: **headers** and **body**. The returned values will be injected into Burpsuite when it displays the intercepted HTTP requests or responses.
 
