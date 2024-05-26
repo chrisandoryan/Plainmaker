@@ -1,6 +1,7 @@
 from burp import IBurpExtender
 from burp import IHttpListener
 from burp import IProxyListener
+from burp import ICookie
 from burp import IBurpExtenderCallbacks
 
 import datetime
@@ -33,6 +34,24 @@ class IEncryptorDecryptor():
     MODE_REQUEST_DECRYPT = 1
     MODE_RESPONSE_ENCRYPT = 2
     MODE_RESPONSE_DECRYPT = 3
+
+    def get_unwanted_cookies(self):
+        """
+        Implement this method to perform automatic removal / value override of certain cookies in the request.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        tuple
+            A tuple that contains the list of cookies that want to be removed / overriden. Cookie keys can accept RegEx pattern. Set the cookie value to 'None' to remove the cookie from the request entirely.
+        """
+
+        return [
+            ('PHPSESSID', None),
+            ('laravel_*', 'new_value_here'),
+        ]
 
     def encrypt_http_request(self, original_request, iRequestInfo):
         """
@@ -157,14 +176,40 @@ class IEncryptorDecryptor():
         burp_request = self.modify_burp_response(original_response, iResponseInfo, response_data)
         return burp_request
 
-        pass
+    def filter_unwanted_cookies(self, cookies):
+        list_unwanted_cookies = self.get_unwanted_cookies()
+        for pattern, value in list_unwanted_cookies:
+            for ck in cookies:
+                print(ck)
+                if re.search(pattern, ck):
+                    print('Cookie value to be set: ', value)
+                    if value:
+                        cookies[ck] = value
+                        print("Updating cookie %s into new value: %s" % (ck, value))
+                    else:
+                        print("Deleting cookie %s" % (ck))
+                        del cookies[ck]
+                    
+        return cookies
 
     def modify_burp_request(self, original_request, iRequestInfo, request_data):
         orig_headers_array = iRequestInfo.getHeaders()
+
+        for i, header in enumerate(orig_headers_array):
+            if header.lower().startswith("cookie:"):
+                cookies = SimpleCookie()
+                cookies.load(header.split(":")[1].strip().encode('ascii', 'ignore'))
+                cookies = {k: v.value for k, v in cookies.items()}
+                
+                cookies = self.filter_unwanted_cookies(cookies)
+                cookie_string = "; ".join([str(x) + "=" + str(y) for x,y in cookies.items()])
+                orig_headers_array[i] = "Cookie: %s" % (cookie_string)
+        
         orig_body = IEncryptorDecryptor.get_http_body(original_request, iRequestInfo)
 
         tampered_body = request_data['body'] or orig_body
         tampered_headers = orig_headers_array
+
         for key, value in request_data['headers'].items():
             h_change_index = FloydsHelpers.index_containing_substring(tampered_headers, key)
             header = "%s: %s" % (key, value, )
@@ -195,7 +240,7 @@ class IEncryptorDecryptor():
                 tampered_headers.append(header)
         
         custom_response = IEncryptorDecryptor.build_raw_http(tampered_headers, tampered_body)
-        print("Tampered Response", custom_response)
+        # print("Tampered Response", custom_response)
 
         return custom_response
 
@@ -305,6 +350,29 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
         print("Loaded " + NAME + " successfully!")
 
     #
+    # implement Cookie Filtering
+    #
+
+    # def filter_unwanted_cookies(self):
+    #     list_unwanted_cookies = self.encdec.get_unwanted_cookies()
+    #     cookies = self._callbacks.getCookieJarContents()
+    #     for pattern, value in list_unwanted_cookies:
+    #         for cookie in cookies:
+    #             print("%s = %s" % (cookie.getName(), cookie.getValue()))
+    #             if re.search(pattern, cookie.getName()):
+    #                 print('Cookie value to be set: ', value)
+    #                 if value:
+    #                     new_cookie = Cookie(cookie.getDomain(), cookie.getName(), value, cookie.getPath(), cookie.getExpiration())
+    #                     print("Updating cookie %s into new value: %s" % (cookie.getName(), value))
+    #                 else:
+    #                     new_cookie = Cookie(cookie.getDomain(), cookie.getName(), None, cookie.getPath(), cookie.getExpiration())
+    #                     print("Deleting cookie %s" % (cookie.getName()))
+                    
+    #                 self._callbacks.updateCookieJar(new_cookie)
+        
+    #     return
+
+    #
     # implement IHttpListener
     #
 
@@ -330,7 +398,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
         if messageIsRequest:
             original_request = FloydsHelpers.jb2ps(messageInfo.getRequest())
             iRequestInfo = self._helpers.analyzeRequest(messageInfo)
-            print("Original Request", original_request)
+            # print("Original Request", original_request)
 
             # 1. Request Decryption Stage
             # If the message is a HTTP request and the handler is iProxyListener,
@@ -362,7 +430,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
         else:
             original_response = FloydsHelpers.jb2ps(messageInfo.getResponse())
             iResponseInfo = self._helpers.analyzeResponse(messageInfo.getResponse())
-            print("Original Response", original_response)
+            # print("Original Response", original_response)
 
             # 3. Response Decryption Stage
             # If the message is HTTP response and the handler is iHttpListener, 
@@ -376,7 +444,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
                     operation_mode=IEncryptorDecryptor.MODE_RESPONSE_DECRYPT
                 )
 
-                print("New Res", new_res)
+                # print("New Res", new_res)
                 new_res_bytes = FloydsHelpers.ps2jb(new_res)
                 messageInfo.setResponse(new_res_bytes)
                 
@@ -450,3 +518,27 @@ class FloydsHelpers(object):
             print("WARNING: content-length is 0, not injecting header")
         
         return newline.join(headers)
+
+class Cookie(ICookie):
+
+    def getDomain(self):
+        return self.cookie_domain
+
+    def getPath(self):
+        return self.cookie_path
+
+    def getExpiration(self):
+        return self.cookie_expiration
+
+    def getName(self):
+        return self.cookie_name
+
+    def getValue(self):
+        return self.cookie_value
+
+    def __init__(self, cookie_domain=None, cookie_name=None, cookie_value=None, cookie_path=None, cookie_expiration=None):
+        self.cookie_domain = cookie_domain
+        self.cookie_name = cookie_name
+        self.cookie_value = cookie_value
+        self.cookie_path = cookie_path
+        self.cookie_expiration = cookie_expiration
