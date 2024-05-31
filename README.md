@@ -93,6 +93,7 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor):
                 "X-API-Key": key,
                 "X-Some-Extra-Header": "you_can_inject_new_header_here_as_well"
             },
+            "params": {},
             "body": "request=%s" % decrypted_body
         }
 ```
