@@ -4,15 +4,17 @@ from burp import IProxyListener
 from burp import ICookie
 from burp import IBurpExtenderCallbacks
 
+import re
 import datetime
 import hmac
 import json
 import base64
 import hashlib
-from urlparse import urlparse
-from urllib import unquote, quote_plus
+from urlparse import urlparse, parse_qs, parse_qsl, urlunparse
+from urllib import unquote, quote_plus, urlencode
 from base64 import b64encode, b64decode
 from subprocess import Popen, PIPE
+from Cookie import SimpleCookie
 
 # Jython imports
 from javax.crypto import Cipher
@@ -35,12 +37,29 @@ class IEncryptorDecryptor():
     MODE_RESPONSE_ENCRYPT = 2
     MODE_RESPONSE_DECRYPT = 3
 
+    def should_filter_cookies(self):
+        """
+        Implement logic to determine whether cookie filtering mechanism should be executed. This allows you to remove / override cookie value only when certain conditions are met.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        boolean
+            A boolean indicating whether the cookie removal / overriden mechanism should be invoked.
+        """
+
+        return True
+    
     def get_unwanted_cookies(self):
         """
         Implement this method to perform automatic removal / value override of certain cookies in the request.
 
         Parameters
         ----------
+        None
 
         Returns
         -------
@@ -67,7 +86,7 @@ class IEncryptorDecryptor():
         Returns
         -------
         dict
-            A dictionary that contains the Headers ('headers') and Body ('body') attribute of the decrypted HTTP request.
+            A dictionary that contains the Headers ('headers'), Params ('params'), and Body ('body') attribute of the decrypted HTTP request.
         """
 
         req_method = self.get_request_method(iRequestInfo)
@@ -75,6 +94,7 @@ class IEncryptorDecryptor():
 
         return {
             "headers": {},
+            "params": {},
             "body": False
         }
 
@@ -92,11 +112,12 @@ class IEncryptorDecryptor():
         Returns
         -------
         dict
-            A dictionary that contains the Headers ('headers') and Body ('body') attribute of the decrypted HTTP request.
+            A dictionary that contains the Headers ('headers'), Params ('params'), and Body ('body') attribute of the decrypted HTTP request.
         """
 
         return {
             "headers": {},
+            "params": {},
             "body": False
         }
 
@@ -114,11 +135,12 @@ class IEncryptorDecryptor():
         Returns
         -------
         dict
-            A dictionary that contains Headers ('headers') and Body ('body') attributes of the HTTP response.
+            A dictionary that contains Headers ('headers'), Params ('params'), and Body ('body') attributes of the HTTP response.
         """
 
         return {
             "headers": {},
+            "params": {},
             "body": False
         }
 
@@ -136,11 +158,12 @@ class IEncryptorDecryptor():
         Returns
         -------
         dict
-            A dictionary that contains Headers ('headers') and Body ('body') attributes of the HTTP response.
+            A dictionary that contains Headers ('headers'), Params ('params'), and Body ('body') attributes of the HTTP response.
         """
 
         return {
             "headers": {},
+            "params": {},
             "body": False
         }
 
@@ -178,23 +201,25 @@ class IEncryptorDecryptor():
 
     def filter_unwanted_cookies(self, cookies):
         list_unwanted_cookies = self.get_unwanted_cookies()
-        for pattern, value in list_unwanted_cookies:
-            for ck in cookies:
-                print(ck)
-                if re.search(pattern, ck):
-                    print('Cookie value to be set: ', value)
-                    if value:
-                        cookies[ck] = value
-                        print("Updating cookie %s into new value: %s" % (ck, value))
-                    else:
-                        print("Deleting cookie %s" % (ck))
-                        del cookies[ck]
+
+        if self.should_filter_cookies():
+            for pattern, value in list_unwanted_cookies:
+                for ck in cookies:
+                    if re.search(pattern, ck):
+                        print('Cookie value to be set: ', value)
+                        if value:
+                            cookies[ck] = value
+                            print("Updating cookie %s into new value: %s" % (ck, value))
+                        else:
+                            print("Deleting cookie %s" % (ck))
+                            del cookies[ck]
                     
         return cookies
 
     def modify_burp_request(self, original_request, iRequestInfo, request_data):
         orig_headers_array = iRequestInfo.getHeaders()
 
+        # Update Cookie
         for i, header in enumerate(orig_headers_array):
             if header.lower().startswith("cookie:"):
                 cookies = SimpleCookie()
@@ -208,8 +233,18 @@ class IEncryptorDecryptor():
         orig_body = IEncryptorDecryptor.get_http_body(original_request, iRequestInfo)
 
         tampered_body = request_data['body'] or orig_body
+        tampered_params = request_data['params'] or None
         tampered_headers = orig_headers_array
 
+        # Update Query Param
+        if tampered_params:
+            request_line = orig_headers_array[0]
+            method, url, http_version = request_line.split(' ', 2)
+            updated_path = IEncryptorDecryptor.update_query_params(url, tampered_params)
+            orig_headers_array[0] = "%s %s %s" % (method, updated_path, http_version)
+            print("New URL: ", orig_headers_array[0])
+
+        # Update Header
         for key, value in request_data['headers'].items():
             h_change_index = FloydsHelpers.index_containing_substring(tampered_headers, key)
             header = "%s: %s" % (key, value, )
@@ -268,6 +303,13 @@ class IEncryptorDecryptor():
         return req_params
     
     @staticmethod
+    def update_query_params(url, params_list):
+        url_parts = list(urlparse(url))
+        url_parts[4] = urlencode(params_list)
+
+        return urlunparse(url_parts)
+    
+    @staticmethod
     def get_http_body(plain, iReqResInfo):
         req_body = plain[iReqResInfo.getBodyOffset():]
         return req_body
@@ -297,24 +339,28 @@ class MyCustomEncryptorDecryptor(IEncryptorDecryptor, object):
     def encrypt_http_request(self, original_request, iRequestInfo):
         return {
             "headers": {},
+            "params": {},
             "body": False
         }
     
     def encrypt_http_response(self, original_response, iResponseInfo):
         return {
             "headers": {},
+            "params": {},
             "body": False
         }
     
     def decrypt_http_request(self, original_request, iRequestInfo):
         return {
             "headers": {},
+            "params": {},
             "body": False
         }
     
     def decrypt_http_response(self, original_response, iResponseInfo):
         return {
             "headers": {},
+            "params": {},
             "body": False
         }
 
